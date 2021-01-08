@@ -20,7 +20,7 @@ public:
 
     bool valid() const;
 
-    int64_t microSecondFromEpoch() const;
+    int64_t microSecondsFromEpoch() const;
     time_t secondFromEpoch() const;
 
     static Timestamp now();
@@ -39,7 +39,7 @@ private:
 };
 
 inline bool operator<(const Timestamp& lhs, const Timestamp& rhs) {
-    return lhs.microSecondFromEpoch() < rhs.microSecondFromEpoch();
+    return lhs.microSecondsFromEpoch() < rhs.microSecondsFromEpoch();
 }
 
 inline bool operator>(const Timestamp& lhs, const Timestamp& rhs) {
@@ -47,7 +47,23 @@ inline bool operator>(const Timestamp& lhs, const Timestamp& rhs) {
 }
 
 inline bool operator==(const Timestamp& lhs, const Timestamp& rhs) {
-    return lhs.microSecondFromEpoch() == rhs.microSecondFromEpoch();
+    return lhs.microSecondsFromEpoch() == rhs.microSecondsFromEpoch();
 }
+
+inline double timeDifference(Timestamp high, Timestamp low) {
+    int64_t diff = high.microSecondsFromEpoch() - low.microSecondsFromEpoch();
+    return static_cast<double>(diff) / MicroSecondsPerSecond;
+}
+
+///
+/// Add @c seconds to given timestamp.
+///
+/// @return timestamp+seconds as Timestamp
+///
+inline Timestamp addTime(Timestamp timestamp, double seconds) {
+    int64_t delta = static_cast<int64_t>(seconds * MicroSecondsPerSecond);
+    return Timestamp(timestamp.microSecondsFromEpoch() + delta);
+}
+
 
 END_NAMESPACE

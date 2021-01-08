@@ -90,7 +90,7 @@ Logger::MyLogger::MyLogger(LogLevel level, int savedErrno, const SourceFile& fil
 
 
 void Logger::MyLogger::formatTime() {
-    const auto times = time_.microSecondFromEpoch();
+    const auto times = time_.microSecondsFromEpoch();
     const auto seconds = times / MicroSecondsPerSecond;
 
     if (seconds != t_lastSecond) {

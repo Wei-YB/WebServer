@@ -46,7 +46,7 @@ bool Timestamp::valid() const {
 }
 
 
-int64_t Timestamp::microSecondFromEpoch() const {
+int64_t Timestamp::microSecondsFromEpoch() const {
     return microSecond;
 }
 

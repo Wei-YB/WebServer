@@ -7,12 +7,12 @@
 
 #include "Utli.h"
 
-START_NAMESPACE namespace  ThisThread {
+START_NAMESPACE namespace ThisThread {
     extern __thread int t_cachedTid;
     extern __thread char t_tidString[32];
-    extern  __thread size_t t_tidStringSize;
-    extern  __thread const char* t_threadName;
-    
+    extern __thread size_t t_tidStringSize;
+    extern __thread const char* t_threadName;
+
 
     void cacheTid();
 
@@ -31,8 +31,6 @@ START_NAMESPACE namespace  ThisThread {
     bool isMainThread();
 
     void sleepUsec(int64_t usec);
-
-//    std::string stackTrace(bool demangle);
 
     }
 

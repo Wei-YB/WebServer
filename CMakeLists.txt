@@ -14,7 +14,11 @@ set(LogStream "LogStream.cpp" "LogStream.h")
 set(Mutex "Mutex.h"  "Mutex.cpp")
 set(CountDownLatch "CountDownLatch.h" "CountDownLatch.cpp" )
 set(Thread "Thread.h")
+set(Condition "Condition.cpp" "Condition.h")
 # 将源代码添加到此项目的可执行文件。
-add_executable (main  "main.cpp" "Utli.h" Logger Timestamp  LogStream )
+
+
+add_executable(Mutex_text "./test/mutex_text.cpp" Mutex Condition Timestamp)
+add_executable (main  "main.cpp" "Utli.h" Logger Timestamp  LogStream  )
 
 # TODO: 如有需要，请添加测试并安装目标。

@@ -6,16 +6,16 @@
 START_NAMESPACE
 
 
-class MutexLock {
+class Mutex {
 public:
-    MutexLock();
+    Mutex();
 
-    MutexLock(MutexLock&&) = delete;
-    MutexLock(const MutexLock&) = delete;
-    MutexLock& operator=(const MutexLock&) = delete;
-    MutexLock& operator =(MutexLock&&) = delete;
+    Mutex(Mutex&&) = delete;
+    Mutex(const Mutex&) = delete;
+    Mutex& operator=(const Mutex&) = delete;
+    Mutex& operator =(Mutex&&) = delete;
 
-    ~MutexLock();
+    ~Mutex();
 
     bool isLockedByThisThread() const;
 
@@ -34,14 +34,14 @@ private:
     friend class Condition;
 };
 
-class MutexLockGuard {
+class LockGuard {
 public:
-    explicit MutexLockGuard(MutexLock& lock);
+    explicit LockGuard(Mutex& lock);
 
-    ~MutexLockGuard();
+    ~LockGuard();
 
 private:
-    MutexLock& lock_;
+    Mutex& lock_;
 };
 
 

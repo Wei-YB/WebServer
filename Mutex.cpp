@@ -7,41 +7,41 @@
 
 USE_NAMESPACE
 
-MutexLock::MutexLock() : mutex_(), holder_(0) {
+Mutex::Mutex() : mutex_(), holder_(0) {
     pthread_mutex_init(&mutex_, nullptr);
 }
 
-MutexLock::~MutexLock() {
+Mutex::~Mutex() {
     assert(holder_ == 0);
     pthread_mutex_destroy(&mutex_);
 }
 
-bool MutexLock::isLockedByThisThread() const {
+bool Mutex::isLockedByThisThread() const {
     return holder_ == ThisThread::tid();
 }
 
-void MutexLock::assertLocked() const {
+void Mutex::assertLocked() const {
     assert(isLockedByThisThread());
 }
 
-void MutexLock::lock() {
+void Mutex::lock() {
     pthread_mutex_lock(&mutex_);
     holder_ = ThisThread::tid();
 }
 
-void MutexLock::unlock() {
+void Mutex::unlock() {
     pthread_mutex_unlock(&mutex_);
     holder_ = 0;
 }
 
-pthread_mutex_t* MutexLock::getPthreadMutex() {
+pthread_mutex_t* Mutex::getPthreadMutex() {
     return &mutex_;
 }
 
-MutexLockGuard::MutexLockGuard(MutexLock& lock) : lock_(lock) {
+LockGuard::LockGuard(Mutex& lock) : lock_(lock) {
     lock.lock();
 }
 
-MutexLockGuard::~MutexLockGuard() {
+LockGuard::~LockGuard() {
     lock_.unlock();
 }
