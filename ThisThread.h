@@ -16,13 +16,9 @@ START_NAMESPACE namespace ThisThread {
 
     void cacheTid();
 
-    int tid() {
-        return t_cachedTid;
-    }
+    int tid();
 
-    const char* tidString() {
-        return t_tidString;
-    }
+    const char* tidString();
 
     int tidStringLength();
 
@@ -30,8 +26,5 @@ START_NAMESPACE namespace ThisThread {
 
     bool isMainThread();
 
-    void sleepUsec(int64_t usec);
-
-    }
-
+}
 END_NAMESPACE
