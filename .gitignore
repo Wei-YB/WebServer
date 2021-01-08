@@ -12,8 +12,10 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+CMakeSettings.json
 
 # Build results
+out/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
