@@ -1,0 +1,3 @@
+/mnt/d/Code/C++/Logging/Logging/out/build/WSL-GCC-Debug/CMakeFiles/rebuild_cache.dir
+/mnt/d/Code/C++/Logging/Logging/out/build/WSL-GCC-Debug/CMakeFiles/main.dir
+/mnt/d/Code/C++/Logging/Logging/out/build/WSL-GCC-Debug/CMakeFiles/edit_cache.dir

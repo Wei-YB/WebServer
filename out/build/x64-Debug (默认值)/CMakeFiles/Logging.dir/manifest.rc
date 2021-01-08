@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+1 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/Code/C++/Logging/Logging/out/build/x64-Debug (默认值)/CMakeFiles/Logging.dir/embed.manifest"
