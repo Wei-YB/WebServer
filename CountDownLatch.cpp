@@ -2,25 +2,24 @@
 
 USE_NAMESPACE
 
-CountDownLatch::CountDownLatch(int count):count_(count) {
-    
-}
+CountDownLatch::CountDownLatch(int count): condition_(mutex_), count_(count) { }
 
 void CountDownLatch::wait() {
-    while(count_ > 0) {
-        condition_.wait(mutex_);
+    LockGuard guard(mutex_);
+    while (count_ > 0) {
+        condition_.waitWithMutexLocked();
     }
 }
 
 void CountDownLatch::countDown() {
-    UniqueMutexLockGuard guard(mutex_);
+    LockGuard guard(mutex_);
     --count_;
     if (count_ == 0)
-        condition_.notify_all();
+        condition_.notifyAll();
 }
 
 int CountDownLatch::getCount() const {
-    UniqueMutexLockGuard guard(mutex_);
+    LockGuard guard(mutex_);
     return count_;
 }
 

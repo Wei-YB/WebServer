@@ -30,6 +30,11 @@ public:
     void notifyAll();
 
 private:
+
+    void waitWithMutexLocked();
+
+    friend class CountDownLatch;
+
     Mutex& mutex_;
     pthread_cond_t cond_{};
 };

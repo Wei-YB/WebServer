@@ -8,8 +8,12 @@
 
 // POSIX thread library
 #include <pthread.h>
+// SYS_gettid
+#include <sys/syscall.h>
 
 #include "CountDownLatch.h"
+
+#define gettid() syscall(SYS_gettid)
 
 START_NAMESPACE
 
@@ -34,10 +38,10 @@ public:
 private:
     void setDefaultName();
 
-    bool       started_;
-    bool       joined_;
-    pthread_t  pthreadId_;
-    pid_t      tid_;
+    bool       started_ = false;
+    bool       joined_ = false;
+    pthread_t  pthreadId_ = 0;
+    pid_t      tid_ = 0;
     ThreadFunc func_;
     std::string     name_;
     CountDownLatch latch_;

@@ -16,7 +16,7 @@ public:
     int getCount() const;
 
 private:
-    mutable  unique_lock<Mutex>  mutex_;
+    mutable Mutex  mutex_;
     Condition condition_;
     int count_;
 };

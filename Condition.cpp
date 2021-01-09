@@ -16,8 +16,9 @@ Condition::~Condition() {
 }
 
 void Condition::wait() {
+    // countDownLatch need to use wait without lock
     LockGuard lock(mutex_);
-    pthread_cond_wait(&cond_, mutex_.getPthreadMutex());
+    waitWithMutexLocked();
 }
 
 bool Condition::waitForSeconds(double seconds) {
@@ -40,6 +41,9 @@ void Condition::notifyAll() {
     pthread_cond_broadcast(&cond_);
 }
 
+void Condition::waitWithMutexLocked() {
+    pthread_cond_wait(&cond_, mutex_.getPthreadMutex());
+}
 
 
 

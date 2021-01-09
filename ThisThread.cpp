@@ -1,14 +1,19 @@
-#include "ThisThread.h"
+
 #include <pthread.h>
-#include <Thread.h>
 #include <unistd.h>
 
+#include "Thread.h"
+#include "ThisThread.h"
 USE_NAMESPACE
 
+__thread int ThisThread::t_cachedTid;
+__thread char ThisThread::t_tidString[32];
+__thread size_t ThisThread::t_tidStringSize;
+__thread const char* ThisThread::t_threadName;
+
 void ThisThread::cacheTid(){
-	t_cachedTid = pthread_self();
+	t_cachedTid = ::gettid();
 	t_tidStringSize = sprintf(t_tidString, "%5d", t_cachedTid);
-	t_threadName = Thread.name_;
 }
 
 int ThisThread::tid()
