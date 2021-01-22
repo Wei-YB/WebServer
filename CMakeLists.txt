@@ -20,12 +20,16 @@ set(CountDownLatch "CountDownLatch.h" "CountDownLatch.cpp" ${Mutex} ${Condition}
 
 set(Thread "ThisThread.h" "ThisThread.cpp" "Thread.h" "Thread.cpp" )
 
+set(AsyncLogging "AsyncLogging.h" "AsyncLogging.cpp" "LogFile.h" "LogFile.cpp" ${Logger} ${Thread} ${CountDownLatch})
+
 
 # 将源代码添加到此项目的可执行文件。
 
 link_libraries("pthread")
-add_executable(Mutex_text "./test/mutex_text.cpp" ${Mutex} ${Condition} ${Timestamp})
+# add_executable(Mutex_text "./test/mutex_text.cpp" ${Mutex} ${Condition} ${Timestamp})
 add_executable (main  "main.cpp" "Utli.h" ${Logger})
 add_executable(thread_test "./test/thread_text.cpp" "Utli.h" ${Thread} ${CountDownLatch} ${Logger})
+
+add_executable(asyLog_text "./test/AsyncLogging_test.cpp" "Utli.h" ${AsyncLogging})
 
 # TODO: 如有需要，请添加测试并安装目标。

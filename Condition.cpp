@@ -17,7 +17,7 @@ Condition::~Condition() {
 
 void Condition::wait() {
     // countDownLatch need to use wait without lock
-    LockGuard lock(mutex_);
+    // LockGuard lock(mutex_);
     waitWithMutexLocked();
 }
 
@@ -29,7 +29,8 @@ bool Condition::waitForSeconds(double seconds) {
     time.tv_sec += static_cast<time_t>((time.tv_nsec + nanoseconds) / NanoSecondsPerSecond);
     time.tv_nsec = static_cast<long>((time.tv_nsec + nanoseconds) % NanoSecondsPerSecond);
 
-    LockGuard lock(mutex_);
+    // no need to do this
+    // LockGuard lock(mutex_);
     return ETIMEDOUT == pthread_cond_timedwait(&cond_, mutex_.getPthreadMutex(), &time);
 }
 
