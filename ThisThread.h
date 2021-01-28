@@ -20,7 +20,7 @@ START_NAMESPACE namespace ThisThread {
 
     const char* tidString();
 
-    int tidStringLength();
+    size_t tidStringLength();
 
     const char* name();
 

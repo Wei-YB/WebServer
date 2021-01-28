@@ -27,7 +27,7 @@ set(AsyncLogging "AsyncLogging.h" "AsyncLogging.cpp" "LogFile.h" "LogFile.cpp" $
 
 link_libraries("pthread")
 # add_executable(Mutex_text "./test/mutex_text.cpp" ${Mutex} ${Condition} ${Timestamp})
-add_executable (main  "main.cpp" "Utli.h" ${Logger})
+add_executable (main  "main.cpp" "Utli.h" ${Logger} "ThisThread.h" "ThisThread.cpp")
 add_executable(thread_test "./test/thread_text.cpp" "Utli.h" ${Thread} ${CountDownLatch} ${Logger})
 
 add_executable(asyLog_text "./test/AsyncLogging_test.cpp" "Utli.h" ${AsyncLogging})

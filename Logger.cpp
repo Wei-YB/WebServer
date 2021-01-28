@@ -3,8 +3,7 @@
 
 #include "Logger.h"
 
-// this_thread :: thread_id
-#include <thread>
+#include "ThisThread.h"
 
 START_NAMESPACE
 
@@ -78,7 +77,9 @@ Logger::MyLogger::MyLogger(LogLevel level, int savedErrno, const SourceFile& fil
     formatTime();
 
     // TODO append current thread id to the buffer
-    
+
+    stream_ << ThisThread::tid()<<' ';
+
     // std::thread::id tid = std::this_thread::get_id();
     // stream_ << static_cast<unsigned long int>(tid);
 
@@ -104,7 +105,8 @@ void Logger::MyLogger::formatTime() {
     snprintf(microSeconds + 1, sizeof microSeconds - 1,
              "%06d", static_cast<int>(times % MicroSecondsPerSecond));
     // this part need to update
-    
+    // 21.1.28: add a space between timestamp and log info
+    microSeconds[7] = ' ';
     stream_ << T(currentTime,17) << T(microSeconds,8);
 }
 

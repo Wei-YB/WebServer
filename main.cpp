@@ -8,7 +8,7 @@ USE_NAMESPACE
 
 int main() {
     LOG_INFO << "main thread start";
-    int i = INT32_MAX;;
+    int i = 100;
     while (--i ) {
         LOG_INFO << "current i is " << i;
     }
