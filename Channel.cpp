@@ -3,33 +3,45 @@
 #include <sys/epoll.h>
 
 #include "Logger.h"
-
+#include "EventLoop.h"
 USE_NAMESPACE
 
 constexpr int NoneEvent = 0;
 constexpr int ReadEvent = EPOLLIN | EPOLLPRI;
 constexpr int WriteEvent = EPOLLOUT;
 
-Channel::Channel(int fd) : fd_(fd), event_(0), actionEvents_(0){}
+Channel::Channel(EventLoop& loop, int fd) : loop_(loop), fd_(fd), event_(0), actionEvents_(0), eventHandling_(false) {}
 
 void Channel::enableReading() {
     event_ |= ReadEvent;
+    update();
 }
 
 void Channel::enableWriting() {
     event_ |= WriteEvent;
+    update();
 }
+
+void Channel::enableReadAndWrite() {
+    event_ |= WriteEvent;
+    event_ |= ReadEvent;
+    update();
+}
+
 
 void Channel::disableReading() {
     event_ &= ~ReadEvent;
+    update();
 }
 
 void Channel::disableWriting() {
     event_ &= ~WriteEvent;
+    update();
 }
 
 void Channel::disableAll() {
     event_ = NoneEvent;
+    update();
 }
 
 bool Channel::isReading() const {
@@ -40,8 +52,12 @@ bool Channel::isWriting() const {
     return actionEvents_ & WriteEvent;
 }
 
-void Channel::handleEvent() {
+void Channel::remove() {
+    loop_.removeChannel(*this);
+}
 
+
+void Channel::handleEvent() {
     eventHandling_ = true;
     LOG_TRACE << eventToString(fd_, actionEvents_);
 
@@ -72,4 +88,12 @@ std::string Channel::eventToString(int fd, int event) {
     if (event & EPOLLRDHUP)
         str += "EPOLLRDHUP";
     return str;
+}
+
+void Channel::update() {
+    if (loop_.hasChannel(*this)) {
+        loop_.updateChannel(*this);
+    }
+    else
+        loop_.insertChannel(*this);
 }

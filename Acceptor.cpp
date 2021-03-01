@@ -10,7 +10,7 @@
 USE_NAMESPACE
 
 Acceptor::Acceptor(EventLoop& loop, uint16_t port) : fd_(NonblockInetSocket()),
-                                                     listenChannel_(fd_),
+                                                     listenChannel_(loop,fd_),
                                                      loop_(loop),
                                                      acceptCallback_([](int fd) { shutdown(fd, 2); }),
                                                      address_(InetAddress::listenAddress(port)),
@@ -30,13 +30,12 @@ Acceptor::Acceptor(EventLoop& loop, uint16_t port) : fd_(NonblockInetSocket()),
     listenChannel_.enableReading();
     listenChannel_.setReadCallback([this]() {this->onAccept(); });
 
-    loop_.insertChannel(listenChannel_);
-
     LOG_TRACE << "Acceptor created, fd = " << fd_;
 }
 
 Acceptor::~Acceptor() {
     listenChannel_.disableAll();
+    listenChannel_.remove();
     ::close(fd_);
 }
 

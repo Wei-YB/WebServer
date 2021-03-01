@@ -32,7 +32,6 @@ private:
 
     std::vector<Channel*> activeChannels_;
     Channel* currentActiveChannel_;
-    
 };
 
 END_NAMESPACE

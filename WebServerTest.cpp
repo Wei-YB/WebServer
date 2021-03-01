@@ -30,9 +30,6 @@ int main() {
 
     acceptor.listen(5);
 
-
-    vector<Channel*> activeChannel;
-
     acceptor.acceptCallback([](int conn)-> void {
         static char buf[2048];
         auto len = read(conn, &buf, sizeof buf);

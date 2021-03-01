@@ -6,13 +6,16 @@
 
 START_NAMESPACE
 
+class EventLoop;
 
 class Channel {
 public:
     using EventCallback = std::function<void()>;
 
-    Channel(int fd);
+    Channel(EventLoop& loop, int fd);
     Channel(const Channel& channel) = default;
+
+    ~Channel() = default;
 
     void handleEvent();
 
@@ -34,8 +37,11 @@ public:
     [[nodiscard]]
     bool isNoneEvent() const { return event_; }
 
+    void remove();
+
     void enableReading();
     void enableWriting();
+    void enableReadAndWrite();
 
     void disableReading();
     void disableWriting();
@@ -54,11 +60,14 @@ public:
 
 private:
 
+    void update();
+
+    EventLoop& loop_;
+
     const int fd_;
 
     int event_;
     int actionEvents_;
-    int index_;
 
     bool eventHandling_;
 
