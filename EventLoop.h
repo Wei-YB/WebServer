@@ -2,6 +2,10 @@
 #include <memory>
 #include <vector>
 #include <atomic>
+#include <functional>
+#include <queue>
+
+
 #include "Timestamp.h"
 
 START_NAMESPACE
@@ -11,6 +15,9 @@ class Channel;
 
 class EventLoop {
 public:
+
+    using Functor = std::function<void()>;
+
     EventLoop();
     void loop();
     void stop();
@@ -29,6 +36,8 @@ private:
     Timestamp pollReturnTime_;
 
     std::unique_ptr<Poller> poller_;
+
+    std::queue<Functor> funcQueue_;
 
     std::vector<Channel*> activeChannels_;
     Channel* currentActiveChannel_;

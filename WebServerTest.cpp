@@ -29,14 +29,24 @@ int main() {
     EventLoop mainLoop;
     Acceptor acceptor(mainLoop, 25465);
 
+    // [fd -> std::shared_ptr<Connection>]
+    unordered_map<int, std::shared_ptr<Connection>> connMaps;
+
     acceptor.listen(5);
 
-    acceptor.acceptCallback([&mainLoop, &acceptor](int conn)-> void {
-        Connection newConn(mainLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
-        newConn.setMessageCallback([](std::shared_ptr<Connection> PtrConn, auto msg, auto len) {
-            std::string str(msg, len);
-            PtrConn->send(HTTPParse::parse(str));
+    acceptor.acceptCallback([&mainLoop, &acceptor, &connMaps](int conn)-> void {
+        connMaps[conn] = std::make_shared<Connection>(mainLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
+        auto newConn = connMaps[conn];
+        newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, auto msg, auto len) {
+            const std::string str(msg, len);
+            LOG_TRACE << "get message from connection:" << ptrConn->fd() << " \n    " << str << ")";
+            ptrConn->send(HTTPParse::parse(str));
         });
+
+        newConn->setCloseCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
+            LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
+            connMaps.erase(ptrConn->fd());
+            });
     });
 
 

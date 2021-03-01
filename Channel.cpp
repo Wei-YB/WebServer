@@ -74,19 +74,19 @@ void Channel::handleEvent() {
 }
 
 std::string Channel::eventToString(int fd, int event) {
-    std::string str = "fd = " + std::to_string(fd) + " event = ";
+    std::string str = "fd = " + std::to_string(fd) + ", event = ";
     if (event & EPOLLIN)
-        str += "EPOLLIN";
+        str += "EPOLLIN ";
     if (event & EPOLLOUT)
-        str += "EPOLLOUT";
+        str += "EPOLLOUT ";
     if (event & EPOLLERR)
-        str += "EPOLLERR";
+        str += "EPOLLERR ";
     if (event & EPOLLPRI)
-        str += "EPOLLPRI";
+        str += "EPOLLPRI ";
     if (event & EPOLLHUP)
-        str += "EPOLLHUP";
+        str += "EPOLLHUP ";
     if (event & EPOLLRDHUP)
-        str += "EPOLLRDHUP";
+        str += "EPOLLRDHUP ";
     return str;
 }
 

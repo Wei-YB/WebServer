@@ -58,8 +58,7 @@ void Acceptor::onAccept() const {
         InetAddress peerAddress{};
         const auto conn = Accept(fd_, peerAddress);
         if (conn > 0) {
-            LOG_INFO << "new connection from " << peerAddress.toString();
-            LOG_TRACE << "new connection fd = " << conn;
+            LOG_INFO << "new connection from " << peerAddress.toString() << " fd = " << conn;
             this->peerAddress = peerAddress;
             acceptCallback_(conn);
         }

@@ -98,10 +98,18 @@ inline Logger::LogLevel Logger::logLevel() {
 }
 
 
+// #define LOG_TRACE if (NAMESPACE Logger::logLevel() <= NAMESPACE Logger::LogLevel::TRACE) \
+//   NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::TRACE, __func__).stream()
+// #define LOG_DEBUG if (NAMESPACE Logger::logLevel() <= NAMESPACE Logger::LogLevel::DEBUG) \
+//   NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::DEBUG, __func__).stream()
+
+
+// remove function name from LOG_TRACE and LOG_DEBUG
 #define LOG_TRACE if (NAMESPACE Logger::logLevel() <= NAMESPACE Logger::LogLevel::TRACE) \
-  NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::TRACE, __func__).stream()
+  NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::TRACE).stream()
 #define LOG_DEBUG if (NAMESPACE Logger::logLevel() <= NAMESPACE Logger::LogLevel::DEBUG) \
-  NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::DEBUG, __func__).stream()
+  NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::DEBUG).stream()
+
 #define LOG_INFO if (NAMESPACE Logger::logLevel() <= NAMESPACE Logger::LogLevel::INFO) \
   NAMESPACE Logger(__FILE__, __LINE__).stream()
 #define LOG_WARN NAMESPACE Logger(__FILE__, __LINE__, NAMESPACE Logger::LogLevel::WARN).stream()

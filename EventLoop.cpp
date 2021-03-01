@@ -26,7 +26,7 @@ void EventLoop::loop() {
     while (!stop_) {
         activeChannels_.clear();
         pollReturnTime_ = poller_->poll(10000, activeChannels_);
-        LOG_TRACE << "poller return in time " << pollReturnTime_.toFormattedString();
+        LOG_TRACE << "event handling";
         for(auto* channel : activeChannels_) {
             channel->handleEvent();
         }
