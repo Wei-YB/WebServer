@@ -1,4 +1,4 @@
-#include "logFile.h"
+#include "LogFile.h"
 
 #include <cstdio>
 #include "Timestamp.h"

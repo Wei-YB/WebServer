@@ -1,35 +1,33 @@
-﻿# CMakeList.txt: Logging 的 CMake 项目，在此处包括源代码并定义
+﻿# CMakeList.txt: WebServerTest 的 CMake 项目，在此处包括源代码并定义
 # 项目特定的逻辑。
 #
 cmake_minimum_required (VERSION 3.8)
 
-project ("Logging")
+project ("WebServerTest")
 
-set(CMAKE_CXX_STANDARD 17)
+aux_source_directory("./base" baseCodeFile )
 
+add_library(base STATIC ${PROJECT_SOURCE_DIR}/${baseCodeFile} )
 
-set(Timestamp "Timestamp.h" "Timestamp.cpp")
-set(LogStream "LogStream.h" "LogStream.cpp" )
-set(Logger "Logger.h" "Logger.cpp"  ${LogStream} ${Timestamp})
+target_include_directories(base PUBLIC ${PROJECT_SOURCE_DIR}/base)
 
-message(${Logger})
+link_libraries(pthread)
 
-set(Condition "Condition.cpp" "Condition.h")
-set(Mutex "Mutex.h"  "Mutex.cpp")
-set(CountDownLatch "CountDownLatch.h" "CountDownLatch.cpp" ${Mutex} ${Condition})
+set(Poller "Poller.h" "Poller.cpp" "Channel.h" "Channel.cpp")
 
-set(Thread "ThisThread.h" "ThisThread.cpp" "Thread.h" "Thread.cpp" )
+set(Acceptor "Acceptor.h" "Acceptor.cpp")
 
-set(AsyncLogging "AsyncLogging.h" "AsyncLogging.cpp" "LogFile.h" "LogFile.cpp" ${Logger} ${Thread} ${CountDownLatch})
+set(EventLoop "EventLoop.h" "EventLoop.cpp")
 
+set(InetAddress "InetAddress.cpp" "InetAddress.h")
 
-# 将源代码添加到此项目的可执行文件。
+set(Socket "Socket.h" "Socket.cpp")
 
-link_libraries("pthread")
-# add_executable(Mutex_text "./test/mutex_text.cpp" ${Mutex} ${Condition} ${Timestamp})
-add_executable (main  "main.cpp" "Utli.h" ${Logger} "ThisThread.h" "ThisThread.cpp")
-add_executable(thread_test "./test/thread_text.cpp" "Utli.h" ${Thread} ${CountDownLatch} ${Logger})
+link_libraries(base)
 
-add_executable(asyLog_text "./test/AsyncLogging_test.cpp" "Utli.h" ${AsyncLogging})
+add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Acceptor} ${InetAddress} ${EventLoop} ${Socket})
+
+add_executable(myTest "test/test.cpp" "InetAddress.h" "InetAddress.cpp")
+
 
 # TODO: 如有需要，请添加测试并安装目标。

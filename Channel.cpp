@@ -1,0 +1,75 @@
+#include "Channel.h"
+
+#include <sys/epoll.h>
+
+#include "Logger.h"
+
+USE_NAMESPACE
+
+constexpr int NoneEvent = 0;
+constexpr int ReadEvent = EPOLLIN | EPOLLPRI;
+constexpr int WriteEvent = EPOLLOUT;
+
+Channel::Channel(int fd) : fd_(fd), event_(0), actionEvents_(0){}
+
+void Channel::enableReading() {
+    event_ |= ReadEvent;
+}
+
+void Channel::enableWriting() {
+    event_ |= WriteEvent;
+}
+
+void Channel::disableReading() {
+    event_ &= ~ReadEvent;
+}
+
+void Channel::disableWriting() {
+    event_ &= ~WriteEvent;
+}
+
+void Channel::disableAll() {
+    event_ = NoneEvent;
+}
+
+bool Channel::isReading() const {
+    return actionEvents_ & ReadEvent;
+}
+
+bool Channel::isWriting() const {
+    return actionEvents_ & WriteEvent;
+}
+
+void Channel::handleEvent() {
+
+    eventHandling_ = true;
+    LOG_TRACE << eventToString(fd_, actionEvents_);
+
+    if (actionEvents_ & EPOLLERR)
+        if (errorCallback_)
+            errorCallback_();
+    if (actionEvents_ & (EPOLLIN | EPOLLPRI | EPOLLRDHUP))
+        if (readCallback_)
+            readCallback_();
+    if (actionEvents_ & EPOLLOUT)
+        if (writeCallback_)
+            writeCallback_();
+    eventHandling_ = false;
+}
+
+std::string Channel::eventToString(int fd, int event) {
+    std::string str = "fd = " + std::to_string(fd) + " event = ";
+    if (event & EPOLLIN)
+        str += "EPOLLIN";
+    if (event & EPOLLOUT)
+        str += "EPOLLOUT";
+    if (event & EPOLLERR)
+        str += "EPOLLERR";
+    if (event & EPOLLPRI)
+        str += "EPOLLPRI";
+    if (event & EPOLLHUP)
+        str += "EPOLLHUP";
+    if (event & EPOLLRDHUP)
+        str += "EPOLLRDHUP";
+    return str;
+}
