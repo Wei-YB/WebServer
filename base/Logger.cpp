@@ -13,7 +13,8 @@ __thread time_t t_lastSecond;
 
 
 const char* strerror_tl(int savedErrno) {
-    strerror_r(savedErrno, t_errnobuf, sizeof t_errnobuf);
+    // fix bug in strerror_r
+    snprintf(t_errnobuf, sizeof t_errnobuf, "%s",strerror(savedErrno));
     return t_errnobuf;
 }
 
