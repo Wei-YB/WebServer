@@ -16,6 +16,7 @@
 #include "HTTPParse.h"
 #include "Poller.h"
 #include "Acceptor.h"
+#include "Connection.h"
 #include "EventLoop.h"
 
 
@@ -30,15 +31,12 @@ int main() {
 
     acceptor.listen(5);
 
-    acceptor.acceptCallback([](int conn)-> void {
-        static char buf[2048];
-        auto len = read(conn, &buf, sizeof buf);
-        buf[len] = '\0';
-        cout << "incoming http request is: " << buf << endl;
-        auto text = HTTPParse::parse(buf, len);
-        cout << text << endl;
-        send(conn, text.c_str(), text.size(), 0);
-        shutdown(conn, 2);
+    acceptor.acceptCallback([&mainLoop, &acceptor](int conn)-> void {
+        Connection newConn(mainLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
+        newConn.setMessageCallback([](std::shared_ptr<Connection> PtrConn, auto msg, auto len) {
+            std::string str(msg, len);
+            PtrConn->send(HTTPParse::parse(str));
+        });
     });
 
 

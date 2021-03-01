@@ -26,11 +26,13 @@ set(InetAddress "InetAddress.cpp" "InetAddress.h")
 
 set(Socket "Socket.h" "Socket.cpp")
 
+set(Connection "Connection.h" "Connection.cpp")
+
 link_libraries(base)
 
-add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Acceptor} ${InetAddress} ${EventLoop} ${Socket})
+add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Acceptor} ${InetAddress} ${EventLoop} ${Socket} ${Connection})
 
 add_executable(myTest "test/test.cpp" "InetAddress.h" "InetAddress.cpp")
 
-
+add_executable(bufferTest "test/bufferTest.cpp")
 # TODO: 如有需要，请添加测试并安装目标。

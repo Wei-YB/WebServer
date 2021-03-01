@@ -84,7 +84,7 @@ void Poller::poll_ctl(const Channel& channel, int opt) const {
 
         epoll_event event{};
         bzero(&event, sizeof event);
-        event.events = channel.event();
+        event.events = channel.event() | EPOLLET;
         event.data.ptr = const_cast<Channel*>(&channel);
 
         ret = epoll_ctl(poller_, opt, channel.fd(), &event);

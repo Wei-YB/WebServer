@@ -10,11 +10,12 @@
 USE_NAMESPACE
 
 Acceptor::Acceptor(EventLoop& loop, uint16_t port) : fd_(NonblockInetSocket()),
-                                                     listenChannel_(loop,fd_),
+                                                     listenChannel_(loop, fd_),
                                                      loop_(loop),
                                                      acceptCallback_([](int fd) { shutdown(fd, 2); }),
                                                      address_(InetAddress::listenAddress(port)),
-                                                     isListening_(false) {
+                                                     isListening_(false),
+                                                     hostAddress("127.0.0.1", port), peerAddress("0.0.0.0", 0) {
     if (fd_ < 0) {
         LOG_SYSFATAL << "socket create error ";
     }
@@ -59,6 +60,7 @@ void Acceptor::onAccept() const {
         if (conn > 0) {
             LOG_INFO << "new connection from " << peerAddress.toString();
             LOG_TRACE << "new connection fd = " << conn;
+            this->peerAddress = peerAddress;
             acceptCallback_(conn);
         }
         else {

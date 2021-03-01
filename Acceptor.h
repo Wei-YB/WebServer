@@ -21,6 +21,9 @@ public:
     const Channel& channel() const { return listenChannel_; }
     Channel& channel() { return listenChannel_; }
 
+    mutable InetAddress peerAddress;
+    InetAddress hostAddress;
+
 private:
     int fd_;
     Channel listenChannel_;
@@ -31,6 +34,7 @@ private:
 
     InetAddress address_;
 
+    
 
     mutable bool isListening_;
 };
