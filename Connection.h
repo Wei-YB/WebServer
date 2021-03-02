@@ -21,6 +21,7 @@ enum class ConnState  {
 
 class Connection : public std::enable_shared_from_this<Connection> {
     using MessageCallback =  std::function<void(std::shared_ptr<Connection>,char*,size_t)>;
+    using WriteFinishCallback = std::function<void (std::shared_ptr<Connection>)>;
     using CloseCallback = std::function<void(std::shared_ptr<Connection>)>;
 public:
     Connection(EventLoop& loop, int fd, const InetAddress& localAddr, const InetAddress& peerAddr);
@@ -34,6 +35,10 @@ public:
     void setMessageCallback(const MessageCallback& func){messageCallback_ = func;}
 
     void setCloseCallback(const CloseCallback& func) { closeCallback_ = func; }
+
+    void setWriteFinishCallback(const WriteFinishCallback& func) {
+        writeFinishCallback_ = func;
+    }
 
     void send(const std::string& str);
 
@@ -63,6 +68,8 @@ private:
 
     MessageCallback messageCallback_;
     CloseCallback closeCallback_;
+    WriteFinishCallback writeFinishCallback_;
+
 
     ConnState state_;
 

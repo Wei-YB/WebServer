@@ -15,7 +15,8 @@ localAddr_(localAddr),peerAddr_(peerAddr),connChannel_(loop_,fd) {
 }
 
 Connection::~Connection() {
-    LOG_TRACE << "connection: " << connChannel_.fd() << " destructor called";
+    LOG_INFO << "connection: " << connChannel_.fd() <<" from:"<<peerAddr_.toString()
+    <<" to: "<<localAddr_.toString()<< " closed";
     connChannel_.remove();
 }
 
@@ -36,7 +37,7 @@ void Connection::handleRead() {
             messageCallback_(shared_from_this(), buf, ret);
         }
         else if(ret == 0) {
-            LOG_INFO << "connection " << peerAddr_.toString() << " closed by peer";
+            LOG_TRACE << "connection " << peerAddr_.toString() << " closed by peer";
             close();
             break;
         }
@@ -57,6 +58,7 @@ void Connection::handleWrite() {
     write(connChannel_.fd(),outputBuffer,outputPos);
     connChannel_.disableWriting();
     outputPos = 0;
+    writeFinishCallback_(shared_from_this());
 }
 
 

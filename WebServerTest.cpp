@@ -7,12 +7,6 @@
 #include <cstring>
 
 
-#include "netinet/in.h"
-#include "sys/socket.h"
-#include <unistd.h>
-
-
-#include "Channel.h"
 #include "HTTPParse.h"
 #include "Poller.h"
 #include "Acceptor.h"
@@ -46,7 +40,11 @@ int main() {
         newConn->setCloseCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
             LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
             connMaps.erase(ptrConn->fd());
-            });
+        });
+        newConn->setWriteFinishCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
+            LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
+            connMaps.erase(ptrConn->fd());
+        });
     });
 
 
