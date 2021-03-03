@@ -12,13 +12,25 @@
 #include "Acceptor.h"
 #include "Connection.h"
 #include "EventLoop.h"
+#include "Thread.h"
 
 
 USE_NAMESPACE
 using namespace std;
 
+EventLoop* ioLoop = nullptr;
+
+
+
 int main() {
     Logger::setLogLevel(Logger::LogLevel::TRACE);
+
+    EventLoop* ioLoop = nullptr;
+    Thread ioThread([&ioLoop]() {
+        ioLoop = new EventLoop();
+        ioLoop->loop();
+        });
+    ioThread.start();
 
     EventLoop mainLoop;
     Acceptor acceptor(mainLoop, 25465);
@@ -28,8 +40,8 @@ int main() {
 
     acceptor.listen(5);
 
-    acceptor.acceptCallback([&mainLoop, &acceptor, &connMaps](int conn)-> void {
-        connMaps[conn] = std::make_shared<Connection>(mainLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
+    acceptor.acceptCallback([&ioLoop, &acceptor, &connMaps](int conn)-> void {
+        connMaps[conn] = std::make_shared<Connection>(*ioLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
         auto newConn = connMaps[conn];
         newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, auto msg, auto len) {
             const std::string str(msg, len);
@@ -46,6 +58,7 @@ int main() {
             connMaps.erase(ptrConn->fd());
         });
     });
+    
 
 
     LOG_INFO << "server running";

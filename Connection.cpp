@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include <unistd.h>
 
+#include "EventLoop.h"
+
 USE_NAMESPACE
 
 Connection::Connection(EventLoop& loop,
@@ -17,7 +19,7 @@ localAddr_(localAddr),peerAddr_(peerAddr),connChannel_(loop_,fd) {
 Connection::~Connection() {
     LOG_INFO << "connection: " << connChannel_.fd() <<" from:"<<peerAddr_.toString()
     <<" to: "<<localAddr_.toString()<< " closed";
-    connChannel_.remove();
+    loop_.runInLoop([this]() {this->connChannel_.remove(); });
 }
 
 void Connection::send(const std::string& str) {

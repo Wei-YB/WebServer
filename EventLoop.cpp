@@ -9,7 +9,7 @@ USE_NAMESPACE
 
 constexpr int PollTimeMs = 10000;
 
-
+// must create in loop thread
 EventLoop::EventLoop(): running_(false),
                         stop_(false),
                         threadId_(ThisThread::tid()),
@@ -26,10 +26,11 @@ void EventLoop::loop() {
     while (!stop_) {
         activeChannels_.clear();
         pollReturnTime_ = poller_->poll(10000, activeChannels_);
-        LOG_TRACE << "event handling";
-        for(auto* channel : activeChannels_) {
-            channel->handleEvent();
-        }
+
+        handleEvent();
+
+        handleRunnable();
+
     }
     LOG_TRACE << "EventLoop " << this << " stop looping";
     running_ = false;
@@ -56,4 +57,27 @@ bool EventLoop::hasChannel(Channel& channel) const {
     return poller_->hasChannel(channel);
 }
 
- 
+bool EventLoop::isInLoopThread() const {
+    return threadId_ == ThisThread::tid();
+}
+
+
+void EventLoop::handleEvent() {
+    eventHandling_ = true;
+    LOG_TRACE << "handle events";
+    for (auto* channel : activeChannels_)
+        channel->handleEvent();
+    eventHandling_ = false;
+}
+
+void EventLoop::handleRunnable() {
+    std::vector<Runnable> que;
+    {
+        LockGuard guard(queueLock_);
+        que.swap(runnableQueue_);
+    }
+    queueRunning_ = true;
+    for (auto& func : runnableQueue_)
+        func();
+    queueRunning_ = false;
+}
