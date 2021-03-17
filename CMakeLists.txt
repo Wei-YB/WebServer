@@ -34,5 +34,5 @@ add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPPa
 
 add_executable(myTest "test/test.cpp" "InetAddress.h" "InetAddress.cpp")
 
-add_executable(bufferTest "test/bufferTest.cpp")
+add_executable(bufferTest "test/bufferTest.cpp" "Buffer.h" "Buffer.cpp")
 # TODO: 如有需要，请添加测试并安装目标。
