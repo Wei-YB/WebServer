@@ -8,16 +8,23 @@ class EventLoop;
 
 class EventLoopThread {
 public:
-    EventLoopThread(const std::string& name);
+    using ThreadInitCallback = std::function<void(EventLoop*)>;
+
+    EventLoopThread(const std::string& name = "", const ThreadInitCallback& func = ThreadInitCallback());
     ~EventLoopThread();
 
-
-    EventLoop& getLoop();
-    EventLoop& run();
+    EventLoop* start();
 private:
 
-    EventLoop& loop_;
+    void threadFunc();
+
+private:
+
+    EventLoop* loop_;
     Thread thread_;
+    Mutex mutex_;
+    Condition cond_;
+    ThreadInitCallback callback_;
 };
 
 END_NAMESPACE

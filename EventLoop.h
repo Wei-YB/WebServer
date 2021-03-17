@@ -5,7 +5,6 @@
 #include <functional>
 #include <queue>
 
-
 #include "Channel.h"
 #include "Mutex.h"
 #include "ThisThread.h"

@@ -26,11 +26,13 @@ set(InetAddress "InetAddress.cpp" "InetAddress.h")
 
 set(Socket "Socket.h" "Socket.cpp")
 
-set(Connection "Connection.h" "Connection.cpp")
+set(Connection "Connection.h" "Connection.cpp" ${Socket} ${InetAddress})
+
+set(Thread  ${EventLoop} "EventLoopThread.h" "EventLoopThread.cpp")
 
 link_libraries(base)
 
-add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Acceptor} ${InetAddress} ${EventLoop} ${Socket} ${Connection})
+add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Connection} ${Acceptor} ${Thread})
 
 add_executable(myTest "test/test.cpp" "InetAddress.h" "InetAddress.cpp")
 
