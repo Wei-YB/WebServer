@@ -30,13 +30,17 @@ void Connection::send(const std::string& str) {
 
 void Connection::handleRead() {
     // read all available data from socket
+    // change the buf to inputBuffer_
     char buf[4096];
 
     while (true) {
+        // todo: use iovec to read data direct into buffer 
         const auto ret = read(connChannel_.fd(), buf, sizeof buf);
         if (ret > 0) {
+            inputBuffer_.write(buf, ret);
             LOG_TRACE << "read message from connection: " << connChannel_.fd() << " and length is " << ret;
-            messageCallback_(shared_from_this(), buf, ret);
+            // use outputBuffer instead of buf
+            messageCallback_(shared_from_this(), inputBuffer_);
         }
         else if(ret == 0) {
             LOG_TRACE << "connection " << peerAddr_.toString() << " closed by peer";
@@ -51,16 +55,46 @@ void Connection::handleRead() {
         }
         else {
             LOG_ERROR << "read error on connection " << connChannel_.fd();
+            close();
             break;
         }
     }
 }
 
 void Connection::handleWrite() {
-    write(connChannel_.fd(),outputBuffer,outputPos);
-    connChannel_.disableWriting();
-    outputPos = 0;
-    writeFinishCallback_(shared_from_this());
+    // fix use outputBuffer_ instead of buffer
+    // EPOLL edge trigger so need to write until EAGAIN or outputBuffer empty
+    for (;;) {
+        const auto writtenSize = write(connChannel_.fd(), outputBuffer_.peek(), outputBuffer_.size());
+        if (writtenSize > 0) {
+            outputBuffer_.consume(writtenSize);
+        }
+        if (outputBuffer_.empty()) {
+            connChannel_.disableWriting();
+            LOG_TRACE << " all write buffer sent";
+            if (writeFinishCallback_)
+                loop_.queueInLoop([this]() {
+                    this->writeFinishCallback_(shared_from_this());
+                });
+            break;
+        }
+        if (writtenSize == -1) {            // handle error
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                LOG_TRACE << "keep write will be block, waiting for next write event";
+            }
+            else if (errno == EINTR) {
+                continue;
+            }
+            else {
+                close();
+                LOG_ERROR << "error handleWrite in connection: " << connChannel_.fd();
+            }
+        }
+    }
+}
+
+void Connection::handleError() {
+    close();
 }
 
 
@@ -68,5 +102,7 @@ void Connection::close() {
     connChannel_.disableAll();
     shutdown(connChannel_.fd(), SHUT_RDWR);
     state_ = ConnState::CLOSED;
-    closeCallback_(shared_from_this());
+    loop_.queueInLoop([this]() {
+        closeCallback_(shared_from_this());
+    });
 }

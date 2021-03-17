@@ -12,8 +12,12 @@ void Buffer::consume(size_t len) {
         readIndex_ += len;
     }
     else {
-        readIndex_ = writeIndex_ = 0;
+        consumeAll();
     }
+}
+
+void Buffer::consumeAll() {
+    readIndex_ = writeIndex_ = 0;
 }
 
 void Buffer::write(const char* str, size_t len) {
@@ -23,15 +27,20 @@ void Buffer::write(const char* str, size_t len) {
 }
 
 std::string Buffer::read(size_t len) {
-    if (size() > len) {
-        readIndex_ += len;
-        return std::string(peek(), len);
-    }
-    else {
-        std::string ret(peek(), len);
-        readIndex_ = writeIndex_ = 0;
-        return ret;
-    }
+
+    auto msg = std::string(peek(), len > size() ? size() : len);
+    consume(len);
+    return msg;
+
+    // if (size() > len) {
+    //     readIndex_ += len;
+    //     return std::string(peek(), len);
+    // }
+    // else {
+    //     std::string ret(peek(), size());
+    //     readIndex_ = writeIndex_ = 0;
+    //     return ret;
+    // }
 }
 
 std::string Buffer::readAll() {
@@ -45,6 +54,10 @@ const char* Buffer::peek() {
 size_t Buffer::size() const {
     assert(writeIndex_ >= readIndex_);
     return writeIndex_ - readIndex_;
+}
+
+bool Buffer::empty() const {
+    return size() == 0;
 }
 
 size_t Buffer::writable() const {

@@ -24,7 +24,7 @@ using namespace std;
 
 
 int main() {
-    Logger::setLogLevel(Logger::LogLevel::TRACE);
+    Logger::setLogLevel(Logger::LogLevel::INFO);
 
     // EventLoop* ioLoop = nullptr;
     // Thread ioThread([&ioLoop]() {
@@ -47,8 +47,8 @@ int main() {
     acceptor.acceptCallback([ioLoop, &acceptor, &connMaps](int conn)-> void {
         connMaps[conn] = std::make_shared<Connection>(*ioLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
         auto newConn = connMaps[conn];
-        newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, auto msg, auto len) {
-            const std::string str(msg, len);
+        newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, Buffer& buf) {
+            const auto str = buf.readAll();
             LOG_TRACE << "get message from connection:" << ptrConn->fd() << " \n    " << str << ")";
             ptrConn->send(HTTPParse::parse(str));
         });

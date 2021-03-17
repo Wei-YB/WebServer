@@ -11,13 +11,13 @@ START_NAMESPACE
 class EventLoop;
 
 
-enum class ConnState  {
+enum class ConnState {
     ESTABLISHED,
     CLOSED
 };
 
 class Connection : public std::enable_shared_from_this<Connection> {
-    using MessageCallback =  std::function<void(std::shared_ptr<Connection>,Buffer&,size_t)>;
+    using MessageCallback = std::function<void(std::shared_ptr<Connection>, Buffer&)>;
     using WriteFinishCallback = std::function<void (std::shared_ptr<Connection>)>;
     using CloseCallback = std::function<void(std::shared_ptr<Connection>)>;
 public:
@@ -29,7 +29,7 @@ public:
         return state_ == ConnState::ESTABLISHED;
     }
 
-    void setMessageCallback(const MessageCallback& func){messageCallback_ = func;}
+    void setMessageCallback(const MessageCallback& func) { messageCallback_ = func; }
 
     void setCloseCallback(const CloseCallback& func) { closeCallback_ = func; }
 
@@ -43,8 +43,8 @@ public:
         return connChannel_.fd();
     }
 
-// TODO: Not implemented
-//     void shutdown();
+    // TODO: Not implemented
+    //     void shutdown();
 
 private:
     void handleRead();
@@ -52,25 +52,28 @@ private:
     void handleWrite();
 
     // TODO handleError 
-    // void handleError();
+    void handleError();
 
     // close connection
     void close();
 private:
-    EventLoop& loop_;
+    EventLoop&  loop_;
     InetAddress localAddr_;
     InetAddress peerAddr_;
 
     Channel connChannel_;
 
-    MessageCallback messageCallback_;
-    CloseCallback closeCallback_;
+    MessageCallback     messageCallback_;
+    CloseCallback       closeCallback_;
     WriteFinishCallback writeFinishCallback_;
 
 
     ConnState state_;
 
+    // data need to send to peer
     Buffer outputBuffer_;
+
+    // data get from peer
     Buffer inputBuffer_;
 };
 

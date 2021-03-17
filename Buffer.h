@@ -14,6 +14,8 @@ public:
 
     void consume(size_t len);
 
+    void consumeAll();
+
     void write(const char* str, size_t len);
 
     std::string read(size_t len);
@@ -24,6 +26,9 @@ public:
 
     [[nodiscard]]
     size_t size() const;
+
+    [[nodiscard]]
+    bool empty() const;
 
     [[nodiscard]]
     size_t writable() const;
