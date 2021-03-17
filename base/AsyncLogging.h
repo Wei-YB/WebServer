@@ -41,7 +41,7 @@ private:
     const off_t rollSize_;
 
 
-    using BufferPtr = std::unique_ptr<Buffer<LargeBufferSize>>;
+    using BufferPtr = std::unique_ptr<LogBuffer<LargeBufferSize>>;
     using BufferVec = std::vector<  BufferPtr>;
 
     Thread thread_;

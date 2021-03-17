@@ -20,17 +20,17 @@ constexpr int LargeBufferSize = 4000 * 1000;
 
 
 template <size_t SIZE>
-class Buffer {
+class LogBuffer {
 public:
     using cookieFunc = void(*)(void);
 
-    Buffer() : data_{}, current_(data_) {}
+    LogBuffer() : data_{}, current_(data_) {}
 
-    Buffer(const Buffer& b) : data_{}, current_(data_ + b.length()) {
+    LogBuffer(const LogBuffer& b) : data_{}, current_(data_ + b.length()) {
         memcpy(data_, b.data(), b.length());
     }
     
-    Buffer& operator=(const Buffer& buffer) {
+    LogBuffer& operator=(const LogBuffer& buffer) {
         if (this == &buffer)
             return *this;
         memcpy(data_, buffer.data_, buffer.length());
@@ -38,10 +38,10 @@ public:
         return *this;
     }
 
-    Buffer(Buffer&&) noexcept = delete;
-    Buffer& operator=(Buffer&&) = delete;
+    LogBuffer(LogBuffer&&) noexcept = delete;
+    LogBuffer& operator=(LogBuffer&&) = delete;
 
-    ~Buffer() = default;
+    ~LogBuffer() = default;
 
     /**
      * \brief Append contents to the buffer
@@ -120,7 +120,7 @@ public:
     using pointer = LogStream*;
     using const_pointer = const LogStream*;
     
-    using MyBuffer = Buffer<SmallBufferSize>;
+    using MyBuffer = LogBuffer<SmallBufferSize>;
 
     // formatting built in type 
     reference operator<<(bool);
