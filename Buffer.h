@@ -3,6 +3,10 @@
 #include <vector>
 #include <string>
 
+#include "Util.h"
+
+START_NAMESPACE
+
 class Buffer {
 public:
 
@@ -16,18 +20,24 @@ public:
 
     std::string readAll();
 
-
     const char* peek();
 
     [[nodiscard]]
     size_t size() const;
 
+    [[nodiscard]]
+    size_t writable() const;
+
     void shrinkToFit();
 
 private:
 
-    void resize(size_t len);
+    char* writePos();
+
+    void ensureCapacity(size_t len);
     size_t readIndex_;
     size_t writeIndex_;
     std::vector<char> buffer_;
 };
+
+END_NAMESPACE

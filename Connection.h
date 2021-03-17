@@ -1,11 +1,8 @@
 #pragma once
 
-#include <cstring>
-
 #include "InetAddress.h"
 #include "Channel.h"
-
-#include <deque>
+#include "Buffer.h"
 #include <memory>
 #include <functional>
 
@@ -20,7 +17,7 @@ enum class ConnState  {
 };
 
 class Connection : public std::enable_shared_from_this<Connection> {
-    using MessageCallback =  std::function<void(std::shared_ptr<Connection>,char*,size_t)>;
+    using MessageCallback =  std::function<void(std::shared_ptr<Connection>,Buffer&,size_t)>;
     using WriteFinishCallback = std::function<void (std::shared_ptr<Connection>)>;
     using CloseCallback = std::function<void(std::shared_ptr<Connection>)>;
 public:
@@ -73,8 +70,8 @@ private:
 
     ConnState state_;
 
-    char outputBuffer[2048];
-    int outputPos;
+    Buffer outputBuffer_;
+    Buffer inputBuffer_;
 };
 
 END_NAMESPACE

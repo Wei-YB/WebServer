@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstring>
 
+USE_NAMESPACE
+
 Buffer::Buffer(): readIndex_(0), writeIndex_(0), buffer_(256) {}
 
 void Buffer::consume(size_t len) {
@@ -15,8 +17,8 @@ void Buffer::consume(size_t len) {
 }
 
 void Buffer::write(const char* str, size_t len) {
-    resize(len);
-    memcpy(buffer_.data() + writeIndex_, str, sizeof(char) * len);
+    ensureCapacity(len);
+    memmove(writePos(), str, len);
     writeIndex_ += len;
 }
 
@@ -45,15 +47,22 @@ size_t Buffer::size() const {
     return writeIndex_ - readIndex_;
 }
 
+size_t Buffer::writable() const {
+    return buffer_.size() - writeIndex_;
+}
+
 void Buffer::shrinkToFit() {
     buffer_.resize(writeIndex_);
     buffer_.shrink_to_fit();
 }
 
+char* Buffer::writePos() {
+    return buffer_.data() + writeIndex_;
+}
 
-void Buffer::resize(size_t len) {
-    const auto available = buffer_.size() - writeIndex_;
-    if (available < len) {
-        buffer_.resize(len * 2 + writeIndex_);
+
+void Buffer::ensureCapacity(size_t len) {
+    if (writable() < len) {
+        buffer_.resize(buffer_.size() * 2);
     }
 }

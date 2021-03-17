@@ -23,8 +23,8 @@ Connection::~Connection() {
 }
 
 void Connection::send(const std::string& str) {
-    memcpy(outputBuffer, str.c_str(), str.size());
-    outputPos = str.size();
+    outputBuffer_.write(str.c_str(), str.size());
+    // memcpy(outputBuffer, str.c_str(), str.size());
     connChannel_.enableWriting();
 }
 
