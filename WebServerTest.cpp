@@ -12,18 +12,32 @@
 #include "Acceptor.h"
 #include "Connection.h"
 #include "EventLoop.h"
-#include "EventLoopThread.h"
-#include "Thread.h"
+#include "EventLoopThreadPool.h"
 
+#include "AsyncLogging.h"
 
 USE_NAMESPACE
 using namespace std;
 
 // EventLoop* ioLoop = nullptr;
 
+AsyncLogging* asyncLog;
+
+void outPut(const char* str, size_t len) {
+    asyncLog->append(str, len);
+}
 
 
 int main() {
+    //TODO use async log!
+    //TODO EventLoopThreadPoll
+
+    AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
+    log.start();
+    asyncLog = &log;
+
+    
+
     Logger::setLogLevel(Logger::LogLevel::INFO);
 
     // EventLoop* ioLoop = nullptr;
@@ -32,20 +46,22 @@ int main() {
     //     ioLoop->loop();
     //     });
     // ioThread.start();
+    EventLoopThreadPool threadPool(4, "ioThread");
 
-    EventLoopThread ioThread{};
-    auto* ioLoop = ioThread.start();
+    threadPool.start();
 
     EventLoop mainLoop;
     Acceptor acceptor(mainLoop, 25465);
 
     // [fd -> std::shared_ptr<Connection>]
+    // TODO connMaps should be thread local
     unordered_map<int, std::shared_ptr<Connection>> connMaps;
 
     acceptor.listen(5);
 
-    acceptor.acceptCallback([ioLoop, &acceptor, &connMaps](int conn)-> void {
-        connMaps[conn] = std::make_shared<Connection>(*ioLoop, conn, acceptor.hostAddress, acceptor.peerAddress);
+    acceptor.acceptCallback([&threadPool, &acceptor, &connMaps](int conn)-> void {
+        auto* loop = threadPool.getLoop();
+        connMaps[conn] = std::make_shared<Connection>(*loop, conn, acceptor.hostAddress, acceptor.peerAddress);
         auto newConn = connMaps[conn];
         newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, Buffer& buf) {
             const auto str = buf.readAll();
@@ -66,6 +82,6 @@ int main() {
 
 
     LOG_INFO << "server running";
-
+    // Logger::setOutput(outPut);
     mainLoop.loop();
 }

@@ -28,7 +28,7 @@ set(Socket "Socket.h" "Socket.cpp")
 
 set(Connection "Connection.h" "Connection.cpp" ${Socket} ${InetAddress})
 
-set(Thread  ${EventLoop} "EventLoopThread.h" "EventLoopThread.cpp")
+set(Thread  ${EventLoop} "EventLoopThread.h" "EventLoopThread.cpp" "EventLoopThreadPool.h" "EventLoopThreadPool.cpp")
 
 set(Buffer "Buffer.cpp" "Buffer.h")
 

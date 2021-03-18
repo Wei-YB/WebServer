@@ -22,6 +22,9 @@ public:
 
     EventLoop();
     void loop();
+
+    bool running() const { return running_; }
+
     void stop();
 
     void queueInLoop(const Runnable& func) {
