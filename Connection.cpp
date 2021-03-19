@@ -64,6 +64,7 @@ void Connection::handleWrite() {
     // fix use outputBuffer_ instead of buffer
     // EPOLL edge trigger so need to write until EAGAIN or outputBuffer empty
     for (;;) {
+        // bug : write an disconnect connection may cause sigpipe
         const auto writtenSize = write(connChannel_.fd(), outputBuffer_.peek(), outputBuffer_.size());
         if (writtenSize > 0) {
             outputBuffer_.consume(writtenSize);

@@ -5,7 +5,7 @@
 
 #include <strings.h>
 #include <cstring>
-
+#include <signal.h>
 
 #include "HTTPParse.h"
 #include "Poller.h"
@@ -40,6 +40,8 @@ int main() {
     log.start();
     asyncLog = &log;
 
+    // fixme : in order to prevent SIGPIPE in write, just ignore SIGPIPE
+    ::signal(SIGPIPE, SIG_IGN);
     
 
     Logger::setLogLevel(Logger::LogLevel::INFO);
@@ -62,7 +64,7 @@ int main() {
     // bug: need to erase connection in loop func, not all
     unordered_map<int, std::shared_ptr<Connection>> connMaps;
 
-    acceptor.listen(5);
+    acceptor.listen(256);
 
     acceptor.acceptCallback([&threadPool, &acceptor, &connMaps, &mainLoop](int conn)-> void {
         auto* loop    = threadPool.getLoop();
