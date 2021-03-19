@@ -28,10 +28,14 @@ void outPut(const char* str, size_t len) {
 }
 
 
+void threadInit(EventLoop* loop) {
+    std::cout << "thread init" << std::endl;
+}
+
 int main() {
     //TODO use async log!
     //TODO EventLoopThreadPoll
-
+    //
     AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
     log.start();
     asyncLog = &log;
@@ -46,7 +50,7 @@ int main() {
     //     ioLoop->loop();
     //     });
     // ioThread.start();
-    EventLoopThreadPool threadPool(4, "ioThread");
+    EventLoopThreadPool threadPool(4, "ioThread", threadInit);
 
     threadPool.start();
 
@@ -54,34 +58,43 @@ int main() {
     Acceptor acceptor(mainLoop, 25465);
 
     // [fd -> std::shared_ptr<Connection>]
-    // TODO connMaps should be thread local
+    // FIXME: thread unsafe
+    // bug: need to erase connection in loop func, not all
     unordered_map<int, std::shared_ptr<Connection>> connMaps;
 
     acceptor.listen(5);
 
-    acceptor.acceptCallback([&threadPool, &acceptor, &connMaps](int conn)-> void {
-        auto* loop = threadPool.getLoop();
-        connMaps[conn] = std::make_shared<Connection>(*loop, conn, acceptor.hostAddress, acceptor.peerAddress);
-        auto newConn = connMaps[conn];
+    acceptor.acceptCallback([&threadPool, &acceptor, &connMaps, &mainLoop](int conn)-> void {
+        auto* loop    = threadPool.getLoop();
+        auto  newConn = std::make_shared<Connection>(*loop, conn, acceptor.hostAddress, acceptor.peerAddress);
+        // fixed, thread unsafe, messageCallback may called before correct set
+        connMaps[conn] = newConn;
         newConn->setMessageCallback([](std::shared_ptr<Connection> ptrConn, Buffer& buf) {
             const auto str = buf.readAll();
             LOG_TRACE << "get message from connection:" << ptrConn->fd() << " \n    " << str << ")";
-            ptrConn->send(HTTPParse::parse(str));
+            const auto result = HTTPParse::parse(str);
+            ptrConn->send(result);
         });
 
-        newConn->setCloseCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
-            LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
-            connMaps.erase(ptrConn->fd());
+        newConn->setCloseCallback([&connMaps, &mainLoop](std::shared_ptr<Connection> ptrConn) {
+            const auto fd = ptrConn->fd();
+            LOG_TRACE << "remove connection:" << fd << " from connMaps";
+            // connMaps.erase(ptrConn->fd());
+            // fix race when erase elem in map
+            mainLoop.queueInLoop([&fd, &connMaps]() {
+                connMaps.erase(fd);
+            });
         });
         newConn->setWriteFinishCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
-            LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
-            connMaps.erase(ptrConn->fd());
+            // LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
+            // ptrConn->close();
         });
+        newConn->connected();
     });
     
 
 
     LOG_INFO << "server running";
-    // Logger::setOutput(outPut);
+    Logger::setOutput(outPut);
     mainLoop.loop();
 }

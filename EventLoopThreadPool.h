@@ -17,7 +17,7 @@ public:
 
     using ThreadInitCallback = std::function<void(EventLoop*)>;
 
-    EventLoopThreadPool(size_t size = 4,const std::string& name = "",ThreadInitCallback func = ThreadInitCallback());
+    EventLoopThreadPool(size_t size = 4,const std::string& name = "",const ThreadInitCallback& func = ThreadInitCallback());
 
     void start();
 

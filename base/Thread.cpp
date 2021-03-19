@@ -17,8 +17,8 @@ MainThreadInit init{};
 
 class ThreadArgs {
 public:
-    ThreadArgs(Thread::ThreadFunc func, CountDownLatch* latch, const std::string& name, pid_t* tid) :
-        func_(std::move(func)), latchPtr_(latch), name_(name), tid_(tid){}
+    ThreadArgs(const Thread::ThreadFunc& func, CountDownLatch* latch, const std::string& name, pid_t* tid) :
+        func_(func), latchPtr_(latch), name_(name), tid_(tid){}
 
     void run() {
         *tid_ = ThisThread::tid();

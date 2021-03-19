@@ -5,7 +5,7 @@
 
 USE_NAMESPACE
 
-EventLoopThreadPool::EventLoopThreadPool(size_t size, const std::string& name, ThreadInitCallback func) :
+EventLoopThreadPool::EventLoopThreadPool(size_t size, const std::string& name, const ThreadInitCallback& func) :
     started_(false), loopSize_(size), next_(0), name_(name) {
     for (size_t i = 0; i < loopSize_; ++i) {
         const auto threadName = name + std::to_string(i);

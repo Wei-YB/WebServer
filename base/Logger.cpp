@@ -13,7 +13,7 @@ __thread time_t t_lastSecond;
 
 
 const char* strerror_tl(int savedErrno) {
-    // fix bug in strerror_r
+    // fixbug in strerror_r
     snprintf(t_errnobuf, sizeof t_errnobuf, "%s",strerror(savedErrno));
     return t_errnobuf;
 }
@@ -77,8 +77,7 @@ Logger::MyLogger::MyLogger(LogLevel level, int savedErrno, const SourceFile& fil
     time_(Timestamp::now()), level_(level), line_(line), basename_(file) {
     formatTime();
 
-    // TODO append current thread id to the buffer
-
+    // append current thread id to the buffer
     stream_ << ThisThread::tid()<<' ';
 
     // std::thread::id tid = std::this_thread::get_id();

@@ -38,9 +38,10 @@ Timestamp Poller::poll(int timeoutMs, std::vector<Channel*>& activeChannels) {
 
 void Poller::insert(const Channel& channel) {
     LOG_TRACE << "insert channel: " << channel.toString();
-    poll_ctl(channel, EPOLL_CTL_ADD);
+    // fix need to update channelsMap before add fd to epoll
     auto fd = channel.fd();
     channelsMap[fd] = const_cast<Channel*>(&channel);
+    poll_ctl(channel, EPOLL_CTL_ADD);   
 }
 
 
@@ -89,6 +90,6 @@ void Poller::poll_ctl(const Channel& channel, int opt) const {
         ret = epoll_ctl(poller_, opt, channel.fd(), &event);
     }
     if (ret < 0) {
-        LOG_FATAL << "epoll_ctl flag = " << flagToString(opt) << " fd = " << channel.fd();
+        LOG_SYSFATAL << "epoll_ctl flag = " << flagToString(opt) << " fd = " << channel.fd();
     }
 }

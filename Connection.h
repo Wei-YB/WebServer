@@ -43,8 +43,16 @@ public:
         return connChannel_.fd();
     }
 
+    // insert into poller and enable read
+    void connected();
+
     // TODO: Not implemented
     //     void shutdown();
+
+// close connection
+    void close();
+
+    
 
 private:
     void handleRead();
@@ -54,8 +62,7 @@ private:
     // TODO handleError 
     void handleError();
 
-    // close connection
-    void close();
+    
 private:
     EventLoop&  loop_;
     InetAddress localAddr_;

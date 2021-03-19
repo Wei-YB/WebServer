@@ -13,13 +13,12 @@ Connection::Connection(EventLoop& loop,
 localAddr_(localAddr),peerAddr_(peerAddr),connChannel_(loop_,fd) {
     connChannel_.setReadCallback([this]() { this->handleRead(); });
     connChannel_.setWriteCallback([this]() { this->handleWrite(); });
-    connChannel_.enableReading();
 }
 
 Connection::~Connection() {
     LOG_INFO << "connection: " << connChannel_.fd() <<" from:"<<peerAddr_.toString()
     <<" to: "<<localAddr_.toString()<< " closed";
-    loop_.runInLoop([this]() {this->connChannel_.remove(); });
+    // loop_.runInLoop([this]() {this->connChannel_.remove(); });
 }
 
 void Connection::send(const std::string& str) {
@@ -98,8 +97,16 @@ void Connection::handleError() {
 }
 
 
+void Connection::connected() {
+
+    connChannel_.enableReading();
+    state_ = ConnState::ESTABLISHED;
+
+}
+
 void Connection::close() {
     connChannel_.disableAll();
+    connChannel_.remove();
     shutdown(connChannel_.fd(), SHUT_RDWR);
     state_ = ConnState::CLOSED;
     loop_.queueInLoop([this]() {
