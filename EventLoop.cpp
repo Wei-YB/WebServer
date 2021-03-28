@@ -61,6 +61,14 @@ bool EventLoop::isInLoopThread() const {
     return threadId_ == ThisThread::tid();
 }
 
+void EventLoop::assertInLoopThread() const {
+    if (!isInLoopThread()) {
+        LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
+            << " was created in threadId_ = " << threadId_
+            << ", current thread id = " << ThisThread::tid();
+    }
+}
+
 
 void EventLoop::handleEvent() {
     eventHandling_ = true;

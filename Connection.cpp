@@ -2,29 +2,109 @@
 #include "Logger.h"
 #include <unistd.h>
 
+#include "Socket.h"
 #include "EventLoop.h"
 
 USE_NAMESPACE
 
-Connection::Connection(EventLoop& loop,
-                       int fd,
+
+static std::string toString(ConnectionState state) {
+    switch (state) {
+        case ConnectionState::established:
+            return "established";
+        case ConnectionState::establishing:
+            return "establishing";
+        case ConnectionState::closing:
+            return "closing";
+        case ConnectionState::closed:
+            return "closed";
+    }
+}
+
+Connection::Connection(EventLoop&         loop,
+                       int                fd,
                        const InetAddress& localAddr,
-                       const InetAddress& peerAddr):loop_(loop),
-localAddr_(localAddr),peerAddr_(peerAddr),connChannel_(loop_,fd) {
-    connChannel_.setReadCallback([this]() { this->handleRead(); });
-    connChannel_.setWriteCallback([this]() { this->handleWrite(); });
+                       const InetAddress& peerAddr): loop_(loop),
+                                                     localAddr_(localAddr),
+                                                     peerAddr_(peerAddr),
+                                                     channel_(loop_, fd),
+                                                     reading_(false),
+                                                     state_(ConnectionState::establishing) {
+    channel_.setReadCallback([this]() { this->handleRead(); });
+    channel_.setWriteCallback([this]() { this->handleWrite(); });
 }
 
 Connection::~Connection() {
-    LOG_INFO << "connection: " << connChannel_.fd() <<" from:"<<peerAddr_.toString()
+    LOG_INFO << "connection: " << channel_.fd() <<" from:"<<peerAddr_.toString()
     <<" to: "<<localAddr_.toString()<< " closed";
-    // loop_.runInLoop([this]() {this->connChannel_.remove(); });
+    // loop_.runInLoop([this]() {this->channel_.remove(); });
 }
 
-void Connection::send(const std::string& str) {
-    outputBuffer_.write(str.c_str(), str.size());
-    // memcpy(outputBuffer, str.c_str(), str.size());
-    connChannel_.enableWriting();
+const InetAddress& Connection::localAddress() const { return localAddr_; }
+const InetAddress& Connection::peerAddress() const { return peerAddr_; }
+
+bool Connection::established() const {
+    return state_ == ConnectionState::established;
+}
+
+ConnectionState Connection::connectionState() const { return state_; }
+
+void Connection::send(const std::string& message) {
+    send(message.c_str(), message.size());  
+}
+
+void Connection::shutdown() {
+    if (state_ == ConnectionState::established) {
+        state_ = ConnectionState::closing;
+        loop_.runInLoop([this]() { this->shutdownInLoop(); });
+    }
+}
+
+void Connection::forceClose() {
+    if (state_ == ConnectionState::established || state_ == ConnectionState::establishing) {
+        state_    = ConnectionState::closing;
+        // todo: optimize the pass of shared_ptr 
+        auto conn = shared_from_this();
+        loop_.queueInLoop([conn]() {
+            conn->forceCloseInLoop();
+        });
+    }
+}
+
+void Connection::setTcpNoDelay(bool on) {
+    setNoDelay(fd(), on);
+}
+
+void Connection::enableRead() {
+    loop_.runInLoop([this]() {
+        this->enableReadInLoop();
+    });
+}
+
+void Connection::disableRead() {
+    loop_.runInLoop([this]() {
+        this->disableReadInLoop();
+    });
+}
+
+bool Connection::isRead() const {
+    return reading_;
+}
+
+void Connection::setConnectionCallback(const ConnectionCallback& func) {
+    connectionCallback_ = func;
+}
+
+void Connection::setMessageCallback(const MessageCallback& func) {
+    messageCallback_ = func;
+}
+
+void Connection::setCloseCallback(const CloseCallback& func) {
+    closeCallback_ = func;
+}
+
+void Connection::setWriteFinishCallback(const WriteFinishCallback& func) {
+    writeFinishCallback_ = func;
 }
 
 void Connection::handleRead() {
@@ -34,27 +114,27 @@ void Connection::handleRead() {
 
     while (true) {
         // todo: use iovec to read data direct into buffer 
-        const auto ret = read(connChannel_.fd(), buf, sizeof buf);
+        const auto ret = read(channel_.fd(), buf, sizeof buf);
         if (ret > 0) {
             inputBuffer_.write(buf, ret);
-            LOG_TRACE << "read message from connection: " << connChannel_.fd() << " and length is " << ret;
+            LOG_TRACE << "read message from connection: " << channel_.fd() << " and length is " << ret;
             // use outputBuffer instead of buf
             messageCallback_(shared_from_this(), inputBuffer_);
         }
         else if(ret == 0) {
             LOG_TRACE << "connection " << peerAddr_.toString() << " closed by peer";
-            close();
+            handleClose();
             break;
         }
         else if (errno == EINTR)
             continue;
         else if (errno == EAGAIN) {
-            LOG_INFO << "read would blocked on connection: " << connChannel_.fd();
+            LOG_INFO << "read would blocked on connection: " << channel_.fd();
             break;
         }
         else {
-            LOG_ERROR << "read error on connection " << connChannel_.fd();
-            close();
+            LOG_SYSERR << "read error on connection " << channel_.fd();
+            handleError();
             break;
         }
     }
@@ -65,12 +145,12 @@ void Connection::handleWrite() {
     // EPOLL edge trigger so need to write until EAGAIN or outputBuffer empty
     for (;;) {
         // bug : write an disconnect connection may cause sigpipe
-        const auto writtenSize = write(connChannel_.fd(), outputBuffer_.peek(), outputBuffer_.size());
+        const auto writtenSize = write(channel_.fd(), outputBuffer_.peek(), outputBuffer_.size());
         if (writtenSize > 0) {
             outputBuffer_.consume(writtenSize);
         }
         if (outputBuffer_.empty()) {
-            connChannel_.disableWriting();
+            channel_.disableWriting();
             LOG_TRACE << " all write buffer sent";
             if (writeFinishCallback_)
                 loop_.queueInLoop([this]() {
@@ -79,38 +159,81 @@ void Connection::handleWrite() {
             break;
         }
         if (writtenSize == -1) {            // handle error
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // fixed: EAGAIN == EWOULDBLOCK
+            if (errno == EAGAIN) {
                 LOG_TRACE << "keep write will be block, waiting for next write event";
             }
             else if (errno == EINTR) {
                 continue;
             }
             else {
-                close();
-                LOG_ERROR << "error handleWrite in connection: " << connChannel_.fd();
+                handleError();
+                LOG_SYSERR << "error handleWrite in connection: " << channel_.fd();
             }
         }
     }
 }
 
+void Connection::handleClose() {
+    loop_.assertInLoopThread();
+    LOG_TRACE << "fd = " << fd() << "state = " << toString(state_);
+    assert(state_ == ConnectionState::established || state_ == ConnectionState::closing);
+
+    state_ = ConnectionState::closed;
+    channel_.disableAll();
+
+    connectionCallback_(shared_from_this());
+    closeCallback_(shared_from_this());
+}
+
 void Connection::handleError() {
-    close();
+    closed();
+}
+
+// ReSharper disable once CppMemberFunctionMayBeConst
+void Connection::shutdownInLoop() {
+    loop_.assertInLoopThread();
+    if (!channel_.isWriting()) {
+        ShutdownWrite(this->fd());
+    }
+}
+
+void Connection::forceCloseInLoop() {
+    loop_.assertInLoopThread();
+    if (state_ == ConnectionState::established || state_ == ConnectionState::closing)
+        handleClose();
+}
+
+void Connection::enableReadInLoop() {
+    
+    if (!reading_ || !channel_.isReading())
+        channel_.enableReading();
+    reading_ = true;
+}
+
+void Connection::disableReadInLoop() {
+    if (reading_ || channel_.isReading())
+        channel_.disableReading();
+    reading_ = false;
 }
 
 
-void Connection::connected() {
+void Connection::established() {
+    loop_.assertInLoopThread();
+    assert(state_ == ConnectionState::establishing);
 
-    connChannel_.enableReading();
-    state_ = ConnState::ESTABLISHED;
+    state_ = ConnectionState::established;
+    channel_.enableReading();
 
+    connectionCallback_(shared_from_this());
 }
 
-void Connection::close() {
-    connChannel_.disableAll();
-    connChannel_.remove();
-    shutdown(connChannel_.fd(), SHUT_RDWR);
-    state_ = ConnState::CLOSED;
-    loop_.queueInLoop([this]() {
-        closeCallback_(shared_from_this());
-    });
+void Connection::closed() {
+    loop_.assertInLoopThread();
+    if(state_ == ConnectionState::established) {
+        state_ = ConnectionState::closed;
+        channel_.disableAll();
+        connectionCallback_(shared_from_this());
+    }
+    channel_.remove();
 }

@@ -27,16 +27,16 @@ public:
 
     void stop();
 
-    void queueInLoop(const Runnable& func) {
+    void queueInLoop(Runnable&& func) {
         LockGuard guard(queueLock_);
-        runnableQueue_.push_back(func);
+        runnableQueue_.push_back(std::move(func));
     }
 
-    void runInLoop(const Runnable& func) {
+    void runInLoop(Runnable&& func) {
         if (isInLoopThread())
             func();
         else
-            queueInLoop(func);
+            queueInLoop(std::move(func));
     }
 
     void insertChannel(Channel&) const;
@@ -46,6 +46,9 @@ public:
     bool hasChannel(Channel&) const;
 
     bool isInLoopThread() const;
+
+    void assertInLoopThread() const;
+
 private:
 
     void handleEvent();
@@ -69,6 +72,9 @@ private:
 
     std::vector<Channel*> activeChannels_;
     Channel* currentActiveChannel_;
+
+    void* data = nullptr;
+
 };
 
 END_NAMESPACE

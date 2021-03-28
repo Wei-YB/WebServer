@@ -14,5 +14,8 @@ void Listen(int fd, int backlog);
 
 int Accept(int fd, InetAddress& address);
 
+void ShutdownWrite(int fd);
+
+void setNoDelay(int fd, bool on);
 
 END_NAMESPACE

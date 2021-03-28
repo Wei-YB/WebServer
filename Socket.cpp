@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "sys/socket.h"
 #include "fcntl.h"
+#include "netinet/tcp.h"
 
 USE_NAMESPACE
 
@@ -65,6 +66,18 @@ int webServer::Accept(int fd, InetAddress& address) {
     }
     LOG_SYSFATAL << "accept fault";
     return -1;
+}
+
+void webServer::ShutdownWrite(int fd) {
+    auto ret = ::shutdown(fd, SHUT_WR);
+    if(ret < 0) {
+        LOG_SYSERR << "socket shutdown write";
+    }
+}
+
+void webServer::setNoDelay(int fd, bool on) {
+    int optval = on;
+    ::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 

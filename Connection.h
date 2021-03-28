@@ -11,77 +11,115 @@ START_NAMESPACE
 class EventLoop;
 
 
-enum class ConnState {
-    ESTABLISHED,
-    CLOSED
+enum class ConnectionState {
+    establishing,
+    established,
+    closing,
+    closed,
 };
 
-class Connection : public std::enable_shared_from_this<Connection> {
-    using MessageCallback = std::function<void(std::shared_ptr<Connection>, Buffer&)>;
-    using WriteFinishCallback = std::function<void (std::shared_ptr<Connection>)>;
-    using CloseCallback = std::function<void(std::shared_ptr<Connection>)>;
+
+// TODO: add a context field to the connection
+class Connection final : public std::enable_shared_from_this<Connection> {
+
+    using ConnectionPtr = std::shared_ptr<Connection>;
+
+    using MessageCallback = std::function<void(ConnectionPtr, Buffer&)>;
+
+    using ConnectionCallback = std::function<void(ConnectionPtr)>;
+    using WriteFinishCallback = ConnectionCallback;
+    using CloseCallback = WriteFinishCallback;
 public:
     Connection(EventLoop& loop, int fd, const InetAddress& localAddr, const InetAddress& peerAddr);
 
     ~Connection();
 
-    bool established() const {
-        return state_ == ConnState::ESTABLISHED;
+    const InetAddress& localAddress() const;
+    const InetAddress& peerAddress() const;
+
+    bool established() const;
+    ConnectionState connectionState() const;
+
+    void send(const std::string& message);
+
+    void send(std::string&& message) {
+        send(message);
     }
 
-    void setMessageCallback(const MessageCallback& func) { messageCallback_ = func; }
-
-    void setCloseCallback(const CloseCallback& func) { closeCallback_ = func; }
-
-    void setWriteFinishCallback(const WriteFinishCallback& func) {
-        writeFinishCallback_ = func;
+    void send(const char* message, size_t len) {
+        outputBuffer_.write(message, len);
+        channel_.enableWriting();
     }
+    // TODO finish buffer with send
+    // void send(Buffer&& message);
+    // void send(const Buffer& message);
 
-    void send(const std::string& str);
+    void shutdown();
+    void forceClose();
+    void setTcpNoDelay(bool on);
+
+    void enableRead();
+
+    void disableRead();
+
+    bool isRead() const;
+
+    // fixed : the callback function maybe reused, don't use r-value ref
+    void setConnectionCallback(const ConnectionCallback& func);
+
+    void setMessageCallback(const MessageCallback& func);
+
+    void setCloseCallback(const CloseCallback& func);
+
+    void setWriteFinishCallback(const WriteFinishCallback& func);
 
     int fd() const {
-        return connChannel_.fd();
+        return channel_.fd();
     }
 
-    // insert into poller and enable read
-    void connected();
-
-    // TODO: Not implemented
-    //     void shutdown();
-
-// close connection
-    void close();
-
-    
+    // only called when connection hand to ioLoop
+    void established();
+    // only called when connection destroyed
+    void closed();  
 
 private:
     void handleRead();
-
     void handleWrite();
+    void handleClose();
 
     // TODO handleError 
     void handleError();
 
-    
+    void sendInLoop(const char* message, size_t len);
+    void shutdownInLoop();
+
+    void forceCloseInLoop();
+
+    void enableReadInLoop();
+    void disableReadInLoop();
+
 private:
     EventLoop&  loop_;
     InetAddress localAddr_;
     InetAddress peerAddr_;
 
-    Channel connChannel_;
+    Channel channel_;
+    bool reading_;
 
     MessageCallback     messageCallback_;
+    ConnectionCallback  connectionCallback_;
     CloseCallback       closeCallback_;
     WriteFinishCallback writeFinishCallback_;
+    
 
-
-    ConnState state_;
+    ConnectionState state_;
 
     // data need to send to peer
     Buffer outputBuffer_;
 
     // data get from peer
     Buffer inputBuffer_;
+
 };
 
 END_NAMESPACE

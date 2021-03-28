@@ -36,15 +36,15 @@ int main() {
     //TODO use async log!
     //TODO EventLoopThreadPoll
     //
-    AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
-    log.start();
-    asyncLog = &log;
+    // AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
+    // log.start();
+    // asyncLog = &log;
 
     // fixme : in order to prevent SIGPIPE in write, just ignore SIGPIPE
     ::signal(SIGPIPE, SIG_IGN);
     
 
-    Logger::setLogLevel(Logger::LogLevel::INFO);
+    Logger::setLogLevel(Logger::LogLevel::TRACE);
 
     // EventLoop* ioLoop = nullptr;
     // Thread ioThread([&ioLoop]() {
@@ -88,8 +88,8 @@ int main() {
             });
         });
         newConn->setWriteFinishCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
-            // LOG_TRACE << "remove connection:" << ptrConn->fd() << " from connMaps";
-            // ptrConn->close();
+            LOG_TRACE << "write finish callback, " <<"remove connection:" << ptrConn->fd() << " from connMaps";
+            ptrConn->close();
         });
         newConn->connected();
     });
@@ -97,6 +97,6 @@ int main() {
 
 
     LOG_INFO << "server running";
-    Logger::setOutput(outPut);
+    // Logger::setOutput(outPut);
     mainLoop.loop();
 }
