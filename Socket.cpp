@@ -1,8 +1,14 @@
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <netinet/tcp.h>
+#include <sys/eventfd.h>
+
 #include "Socket.h"
+
+#include <unistd.h>
+
 #include "Logger.h"
-#include "sys/socket.h"
-#include "fcntl.h"
-#include "netinet/tcp.h"
+
 
 USE_NAMESPACE
 
@@ -78,6 +84,18 @@ void webServer::ShutdownWrite(int fd) {
 void webServer::setNoDelay(int fd, bool on) {
     int optval = on;
     ::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval));
+}
+
+int webServer::eventFd() {
+    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (evtfd < 0) {
+        LOG_SYSFATAL << "Failed in eventfd";
+    }
+    return evtfd;
+}
+
+void webServer::Close(int fd) {
+    ::close(fd);
 }
 
 

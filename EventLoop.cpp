@@ -1,20 +1,35 @@
 #include "EventLoop.h"
 
+#include <unistd.h>
+
 
 #include "Channel.h"
 #include "Poller.h"
 #include "ThisThread.h"
+#include "Socket.h"
 
 USE_NAMESPACE
 
 constexpr int PollTimeMs = 10000;
 
 // must create in loop thread
-EventLoop::EventLoop(): running_(false),
-                        stop_(false),
-                        threadId_(ThisThread::tid()),
-                        pollReturnTime_(),
-                        poller_(std::make_unique<Poller>()), currentActiveChannel_(nullptr) { }
+EventLoop::EventLoop() : running_(false),
+                         stop_(false),
+                         wakeupFd_(eventFd()),
+                         wakeupChannel_(*this, wakeupFd_),
+                         threadId_(ThisThread::tid()),
+                         pollReturnTime_(),
+                         poller_(std::make_unique<Poller>()), currentActiveChannel_(nullptr) {
+    wakeupChannel_.setReadCallback([this]() {
+        handleWakeUp();
+    });
+    wakeupChannel_.enableReading();
+}
+
+EventLoop::~EventLoop() {
+    wakeupChannel_.disableAll();
+    Close(wakeupFd_);
+}
 
 
 void EventLoop::loop() {
@@ -39,6 +54,22 @@ void EventLoop::loop() {
 
 void EventLoop::stop() {
     running_ = false;
+}
+
+void EventLoop::queueInLoop(const Runnable& func) {
+    {
+        LockGuard guard(queueLock_);
+        runnableQueue_.push_back(func);
+    }
+    if (!isInLoopThread() || eventHandling_)
+        wakeup();
+}
+
+void EventLoop::runInLoop(const Runnable& func) {
+    if (isInLoopThread())
+        func();
+    else
+        queueInLoop(func);
 }
 
 void EventLoop::insertChannel(Channel& channel) const {
@@ -69,6 +100,14 @@ void EventLoop::assertInLoopThread() const {
     }
 }
 
+void EventLoop::wakeup() {
+    uint64_t val = 1;
+    auto     ret = ::write(wakeupFd_, &val, sizeof val);
+    if (ret != sizeof val) {
+        LOG_SYSERR << "EventLoop::wakeup() writes " << ret << " bytes instead of 8";
+    }
+}
+
 
 void EventLoop::handleEvent() {
     eventHandling_ = true;
@@ -79,13 +118,34 @@ void EventLoop::handleEvent() {
 }
 
 void EventLoop::handleRunnable() {
+    LOG_TRACE << "handle runnable";
     std::vector<Runnable> que;
     {
         LockGuard guard(queueLock_);
         que.swap(runnableQueue_);
     }
     queueRunning_ = true;
-    for (auto& func : runnableQueue_)
+    // fixed: used wrong runnable queue
+    for (auto& func : que)
         func();
     queueRunning_ = false;
+}
+
+void EventLoop::handleWakeUp() {
+    uint64_t val = 1;
+    while (true) {
+        const auto ret = ::read(wakeupFd_, &val, sizeof val);
+        if (ret < 0) {
+            if (errno == EAGAIN)
+                break;
+            else if (errno == EINTR)
+                continue;
+            else {
+                LOG_SYSERR << "EventLoop::handleWakeUp() error";
+            }
+        }
+        else if (ret != sizeof val) {
+            LOG_ERROR << "EventLoop::handleWakeUp() reads " << ret << " bytes instead of 8";
+        }
+    }
 }

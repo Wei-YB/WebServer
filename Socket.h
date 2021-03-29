@@ -18,4 +18,8 @@ void ShutdownWrite(int fd);
 
 void setNoDelay(int fd, bool on);
 
+int eventFd();
+
+void Close(int fd);
+
 END_NAMESPACE

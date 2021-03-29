@@ -104,12 +104,12 @@ private:
     InetAddress peerAddr_;
 
     Channel channel_;
-    bool reading_;
 
-    MessageCallback     messageCallback_;
-    ConnectionCallback  connectionCallback_;
-    CloseCallback       closeCallback_;
-    WriteFinishCallback writeFinishCallback_;
+
+    MessageCallback     messageCallback_     = [](ConnectionPtr ptr, Buffer& buf) { buf.consumeAll(); };
+    ConnectionCallback  connectionCallback_  = [](ConnectionPtr ptr) {};
+    CloseCallback       closeCallback_       = [](ConnectionPtr ptr) { ptr->closed(); };
+    WriteFinishCallback writeFinishCallback_ = [](ConnectionPtr ) {};
     
 
     ConnectionState state_;
@@ -119,7 +119,7 @@ private:
 
     // data get from peer
     Buffer inputBuffer_;
-
+    bool reading_;
 };
 
 END_NAMESPACE

@@ -221,7 +221,7 @@ void Connection::disableReadInLoop() {
 void Connection::established() {
     loop_.assertInLoopThread();
     assert(state_ == ConnectionState::establishing);
-
+    LOG_DEBUG << "connection established, fd = " << fd();
     state_ = ConnectionState::established;
     channel_.enableReading();
 
@@ -236,4 +236,5 @@ void Connection::closed() {
         connectionCallback_(shared_from_this());
     }
     channel_.remove();
+    ::close(fd());
 }

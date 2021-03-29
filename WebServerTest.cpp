@@ -29,16 +29,17 @@ void outPut(const char* str, size_t len) {
 
 
 void threadInit(EventLoop* loop) {
-    std::cout << "thread init" << std::endl;
+    LOG_INFO << "io thread init";
+    loop->assertInLoopThread();
 }
 
 int main() {
     //TODO use async log!
     //TODO EventLoopThreadPoll
     //
-    // AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
-    // log.start();
-    // asyncLog = &log;
+    AsyncLogging log("/home/csi/webServer", 1000 * 1000 * 500);
+    log.start();
+    asyncLog = &log;
 
     // fixme : in order to prevent SIGPIPE in write, just ignore SIGPIPE
     ::signal(SIGPIPE, SIG_IGN);
@@ -52,7 +53,7 @@ int main() {
     //     ioLoop->loop();
     //     });
     // ioThread.start();
-    EventLoopThreadPool threadPool(4, "ioThread", threadInit);
+    EventLoopThreadPool threadPool(1, "ioThread", threadInit);
 
     threadPool.start();
 
@@ -89,14 +90,14 @@ int main() {
         });
         newConn->setWriteFinishCallback([&connMaps](std::shared_ptr<Connection> ptrConn) {
             LOG_TRACE << "write finish callback, " <<"remove connection:" << ptrConn->fd() << " from connMaps";
-            ptrConn->close();
+            ptrConn->closed();
         });
-        newConn->connected();
+        loop->runInLoop([newConn]() {newConn->established(); });
     });
     
 
 
     LOG_INFO << "server running";
-    // Logger::setOutput(outPut);
+    Logger::setOutput(outPut);
     mainLoop.loop();
 }
