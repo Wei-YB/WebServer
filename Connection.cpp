@@ -32,6 +32,8 @@ Connection::Connection(EventLoop&         loop,
                                                      state_(ConnectionState::establishing) {
     channel_.setReadCallback([this]() { this->handleRead(); });
     channel_.setWriteCallback([this]() { this->handleWrite(); });
+    channel_.setCloseCallback([this]() { this->handleClose(); });
+    channel_.setErrorCallback([this]() { this->handleError(); });
 }
 
 Connection::~Connection() {
@@ -129,7 +131,7 @@ void Connection::handleRead() {
         else if (errno == EINTR)
             continue;
         else if (errno == EAGAIN) {
-            LOG_INFO << "read would blocked on connection: " << channel_.fd();
+            LOG_TRACE << "read would blocked on connection: " << channel_.fd();
             break;
         }
         else {
@@ -144,7 +146,7 @@ void Connection::handleWrite() {
     // fix use outputBuffer_ instead of buffer
     // EPOLL edge trigger so need to write until EAGAIN or outputBuffer empty
     for (;;) {
-        // bug : write an disconnect connection may cause sigpipe
+        // fixed : write an disconnect connection may cause sigpipe
         const auto writtenSize = write(channel_.fd(), outputBuffer_.peek(), outputBuffer_.size());
         if (writtenSize > 0) {
             outputBuffer_.consume(writtenSize);
@@ -162,13 +164,14 @@ void Connection::handleWrite() {
             // fixed: EAGAIN == EWOULDBLOCK
             if (errno == EAGAIN) {
                 LOG_TRACE << "keep write will be block, waiting for next write event";
+                continue;
             }
             else if (errno == EINTR) {
                 continue;
             }
             else {
-                handleError();
                 LOG_SYSERR << "error handleWrite in connection: " << channel_.fd();
+                break;
             }
         }
     }
@@ -186,8 +189,15 @@ void Connection::handleClose() {
     closeCallback_(shared_from_this());
 }
 
+
+// we should not close a connection in handle error
+// the connection will be closed on handle read
 void Connection::handleError() {
-    closed();
+    int  err = 0;
+    auto len = static_cast<socklen_t>(sizeof err);
+    ::getsockopt(fd(), SOL_SOCKET, SO_ERROR, &err, &len);
+    LOG_ERROR << "TcpConnection::handleError [" << peerAddr_.toString()
+        << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst

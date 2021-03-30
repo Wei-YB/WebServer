@@ -22,6 +22,7 @@ public:
     void setReadCallback(const EventCallback& callback) { readCallback_ = callback; }
     void setWriteCallback(const EventCallback& callback) { writeCallback_ = callback; }
     void setErrorCallback(const EventCallback& callback) { errorCallback_ = callback; }
+    void setCloseCallback(const EventCallback& callback) { closeCallback_ = callback; }
 
     [[nodiscard]]
     int fd() const { return fd_; }
@@ -74,7 +75,9 @@ private:
 
     EventCallback readCallback_;
     EventCallback writeCallback_;
+    EventCallback closeCallback_;
     EventCallback errorCallback_;
+    
 };
 
 END_NAMESPACE

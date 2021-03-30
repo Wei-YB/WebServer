@@ -45,7 +45,7 @@ int main() {
     ::signal(SIGPIPE, SIG_IGN);
     
 
-    Logger::setLogLevel(Logger::LogLevel::TRACE);
+    Logger::setLogLevel(Logger::LogLevel::ERROR);
 
     // EventLoop* ioLoop = nullptr;
     // Thread ioThread([&ioLoop]() {
@@ -98,6 +98,6 @@ int main() {
 
 
     LOG_INFO << "server running";
-    Logger::setOutput(outPut);
+    // Logger::setOutput(outPut);
     mainLoop.loop();
 }
