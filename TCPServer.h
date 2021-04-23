@@ -20,8 +20,12 @@ public:
     using ConnectionMaps = std::unordered_map<int, std::shared_ptr<Connection>>;
 
 
-    TcpServer(int port, int workThread);
+    TcpServer(uint16_t port, int workThread);
 
+    void setMessageCallback(const MessageCallback& func) { messageCallback_ = func; }
+    void setConnectionCallback(const ConnectionCallback& func) { connectionCallback_ = func; }
+    void setCloseCallback(const CloseCallback& func) { closeCallback_ = func; }
+    void setWriteFinishCallback(const WriteFinishCallback& func) { writeFinishCallback_ = func; }
 
     void start();
 

@@ -77,6 +77,14 @@ public:
         return channel_.fd();
     }
 
+    void setData(void* ptr) {
+        data = ptr;
+    }
+
+    void* getData() const {
+        return data;
+    }
+
     // only called when connection hand to ioLoop
     void established();
     // only called when connection destroyed
@@ -97,6 +105,8 @@ private:
 
     void enableReadInLoop();
     void disableReadInLoop();
+
+    void* data = nullptr;
 
 private:
     EventLoop&  loop_;

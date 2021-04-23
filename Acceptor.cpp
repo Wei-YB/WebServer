@@ -9,27 +9,24 @@
 #include <cerrno>
 USE_NAMESPACE
 
-Acceptor::Acceptor(EventLoop& loop, uint16_t port) : fd_(NonblockInetSocket()),
+Acceptor::Acceptor(EventLoop&            loop,
+                   uint16_t              port,
+                   const AcceptCallback& callback) : peerAddress("0.0.0.0", 0),
+                                                     hostAddress("127.0.0.1", port),
+                                                     fd_(NonblockInetSocket()),
                                                      listenChannel_(loop, fd_),
                                                      loop_(loop),
-                                                     acceptCallback_([](int fd) { shutdown(fd, 2); }),
+                                                     acceptCallback_(callback),
                                                      address_(InetAddress::listenAddress(port)),
-                                                     isListening_(false),
-                                                     hostAddress("127.0.0.1", port), peerAddress("0.0.0.0", 0) {
+                                                     isListening_(false) {
     if (fd_ < 0) {
         LOG_SYSFATAL << "socket create error ";
     }
 
-    // sockaddr_in addr{};
-    // bzero(&addr, sizeof addr);
-    // addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    // addr.sin_port = htons(static_cast<uint16_t>(port));
-    // addr.sin_family = AF_INET;
-
     Bind(fd_, address_);
 
     listenChannel_.enableReading();
-    listenChannel_.setReadCallback([this]() {this->onAccept(); });
+    listenChannel_.setReadCallback([this]() { this->onAccept(); });
 
     LOG_TRACE << "Acceptor created, fd = " << fd_;
 }
@@ -55,11 +52,11 @@ void Acceptor::acceptCallback(const std::function<void(int)>& func) {
 
 void Acceptor::onAccept() const {
     while (true) {
-        InetAddress peerAddress{};
-        const auto conn = Accept(fd_, peerAddress);
+        // InetAddress peerAddr{};
+        const auto  conn = Accept(fd_, peerAddress);
         if (conn > 0) {
             LOG_INFO << "new connection from " << peerAddress.toString() << " fd = " << conn;
-            this->peerAddress = peerAddress;
+            // this->peerAddress = peerAddress;
             acceptCallback_(conn);
         }
         else {
