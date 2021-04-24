@@ -1,0 +1,1 @@
+MinGW not found at: D:\Code\MinGW Configure Disable profile

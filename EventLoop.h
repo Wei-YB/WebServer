@@ -3,11 +3,9 @@
 #include <vector>
 #include <atomic>
 #include <functional>
-#include <queue>
 
 #include "Channel.h"
 #include "Mutex.h"
-#include "ThisThread.h"
 #include "Timestamp.h"
 
 START_NAMESPACE
@@ -23,8 +21,16 @@ public:
 
     EventLoop();
     ~EventLoop();
+
+    EventLoop(const EventLoop&)            = delete;
+    EventLoop(EventLoop&&)                 = delete;
+    EventLoop& operator=(const EventLoop&) = delete;
+    EventLoop& operator=(EventLoop&&)      = delete;
+
+
     void loop();
 
+    [[nodiscard]]
     bool running() const { return running_; }
 
     void stop();
@@ -40,13 +46,14 @@ public:
 
     bool hasChannel(Channel&) const;
 
+    [[nodiscard]]
     bool isInLoopThread() const;
 
     void assertInLoopThread() const;
 
 
     // add wakeup feature to eventLoop, in order to wakeup epoll_wait
-    void wakeup();
+    void wakeup() const;
 
 private:
 
@@ -54,7 +61,7 @@ private:
 
     void handleRunnable();
 
-    void handleWakeUp();
+    void handleWakeUp() const;
 
 private:
     bool running_;
@@ -79,6 +86,8 @@ private:
     std::vector<Runnable> runnableQueue_;
 
     std::vector<Channel*> activeChannels_;
+
+    [[maybe_unused]]
     Channel*              currentActiveChannel_;
 };
 

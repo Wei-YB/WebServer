@@ -62,7 +62,7 @@ void Channel::handleEvent() {
     LOG_TRACE << eventToString(fd_, actionEvents_);
 
 
-    // connection closed by peer
+    // connection close by peer
     if ((actionEvents_ & EPOLLHUP) && !(actionEvents_ & EPOLLIN))
         if (closeCallback_)
             closeCallback_();

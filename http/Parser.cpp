@@ -1,9 +1,7 @@
 #include "Parser.h"
 #include "../Buffer.h"
 
-using webServer::Buffer;
-using namespace webServer::http;
-
+using namespace NAMESPACE http;
 
 static const char*   peekNext(const char* begin, const char* end, char ch);
 static RequestMethod parseMethod(const char* begin, const char* end);

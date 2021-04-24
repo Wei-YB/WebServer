@@ -1,10 +1,12 @@
 #pragma once
+#include <any>
+#include <memory>
+#include <functional>
 
 #include "InetAddress.h"
 #include "Channel.h"
 #include "Buffer.h"
-#include <memory>
-#include <functional>
+
 
 START_NAMESPACE
 
@@ -56,7 +58,7 @@ public:
 
     void shutdown();
     void forceClose();
-    void setTcpNoDelay(bool on);
+    void setTcpNoDelay(bool on) const;
 
     void enableRead();
 
@@ -77,18 +79,18 @@ public:
         return channel_.fd();
     }
 
-    void setData(void* ptr) {
-        data = ptr;
+    std::any& getContext() { return context_; }
+
+    template <typename T>
+    void setContext(T&& value) {
+        context_ = std::make_any<T>(std::forward<T>(value));
     }
 
-    void* getData() const {
-        return data;
-    }
 
     // only called when connection hand to ioLoop
-    void established();
+    void establish();
     // only called when connection destroyed
-    void closed();  
+    void close();  
 
 private:
     void handleRead();
@@ -98,7 +100,9 @@ private:
     // TODO handleError 
     void handleError();
 
-    void sendInLoop(const char* message, size_t len);
+
+    // TODO
+    // void sendInLoop(const char* message, size_t len);
     void shutdownInLoop();
 
     void forceCloseInLoop();
@@ -106,29 +110,25 @@ private:
     void enableReadInLoop();
     void disableReadInLoop();
 
-    void* data = nullptr;
-
 private:
     EventLoop&  loop_;
     InetAddress localAddr_;
     InetAddress peerAddr_;
 
     Channel channel_;
-
-
+    
     MessageCallback     messageCallback_     = [](ConnectionPtr ptr, Buffer& buf) { buf.consumeAll(); };
     ConnectionCallback  connectionCallback_  = [](ConnectionPtr ptr) {};
-    CloseCallback       closeCallback_       = [](ConnectionPtr ptr) { ptr->closed(); };
+    CloseCallback       closeCallback_       = [](ConnectionPtr ptr) { ptr->close(); };
     WriteFinishCallback writeFinishCallback_ = [](ConnectionPtr ) {};
     
-
     ConnectionState state_;
 
-    // data need to send to peer
-    Buffer outputBuffer_;
+    Buffer outputBuffer_; // data need to send to peer
+    Buffer inputBuffer_;  // data get from peer
 
-    // data get from peer
-    Buffer inputBuffer_;
+    std::any context_;
+
     bool reading_;
 };
 

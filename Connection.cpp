@@ -73,7 +73,7 @@ void Connection::forceClose() {
     }
 }
 
-void Connection::setTcpNoDelay(bool on) {
+void Connection::setTcpNoDelay(bool on) const {
     setNoDelay(fd(), on);
 }
 
@@ -228,7 +228,7 @@ void Connection::disableReadInLoop() {
 }
 
 
-void Connection::established() {
+void Connection::establish() {
     loop_.assertInLoopThread();
     assert(state_ == ConnectionState::establishing);
     LOG_DEBUG << "connection established, fd = " << fd();
@@ -238,7 +238,7 @@ void Connection::established() {
     connectionCallback_(shared_from_this());
 }
 
-void Connection::closed() {
+void Connection::close() {
     loop_.assertInLoopThread();
     if(state_ == ConnectionState::established) {
         state_ = ConnectionState::closed;

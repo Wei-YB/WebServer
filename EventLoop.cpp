@@ -10,15 +10,17 @@
 
 USE_NAMESPACE
 
+[[maybe_unused]]
 constexpr int PollTimeMs = 10000;
 
 // must create in loop thread
 EventLoop::EventLoop() : running_(false),
-                         stop_(false),
+                         eventHandling_(false),
+                         queueRunning_(false),
                          wakeupFd_(eventFd()),
                          wakeupChannel_(*this, wakeupFd_),
+                         stop_(false),
                          threadId_(ThisThread::tid()),
-                         pollReturnTime_(),
                          poller_(std::make_unique<Poller>()), currentActiveChannel_(nullptr) {
     wakeupChannel_.setReadCallback([this]() {
         handleWakeUp();
@@ -100,9 +102,9 @@ void EventLoop::assertInLoopThread() const {
     }
 }
 
-void EventLoop::wakeup() {
-    uint64_t val = 1;
-    auto     ret = ::write(wakeupFd_, &val, sizeof val);
+void EventLoop::wakeup() const {
+    uint64_t   val = 1;
+    const auto ret = ::write(wakeupFd_, &val, sizeof val);
     if (ret != sizeof val) {
         LOG_SYSERR << "EventLoop::wakeup() writes " << ret << " bytes instead of 8";
     }
@@ -131,7 +133,7 @@ void EventLoop::handleRunnable() {
     queueRunning_ = false;
 }
 
-void EventLoop::handleWakeUp() {
+void EventLoop::handleWakeUp() const {
     uint64_t val = 1;
     while (true) {
         const auto ret = ::read(wakeupFd_, &val, sizeof val);

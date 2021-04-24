@@ -6,7 +6,8 @@
 #include <unistd.h>
 
 
-#include "HTTPParse.h"
+#include "http/Parser.h"
+#include "http/Response.h"
 #include "Connection.h"
 #include "Logger.h"
 #include "TCPServer.h"
@@ -28,6 +29,12 @@ void threadInit(EventLoop* loop) {
     loop->assertInLoopThread();
 }
 
+using http::Parser;
+using http::Response;
+
+static Response badReq;
+static Response notFound;
+static string mainPage;
 int main() {
     //TODO use async log!
     //TODO EventLoopThreadPoll
@@ -44,11 +51,48 @@ int main() {
 
     TcpServer server(25465, 1);
 
-    server.setMessageCallback([](std::shared_ptr<Connection> ptrConn, Buffer& buf) {
-        const auto str = buf.readAll();
-        LOG_TRACE << "get message from connection:" << ptrConn->fd() << " \n    " << str << ")";
-        const auto result = HTTPParse::parse(str);
-        ptrConn->send(result);
+    badReq.status() = 400;
+    notFound.status() = 404;
+
+    server.setConnectionCallback([](std::shared_ptr<Connection> conn) {
+        if (conn->established()) {
+            conn->setContext(http::Parser{});
+        }
+    });
+
+    mainPage = "<html><head><title>a light web server </title>"
+        "<link rel=\"icon\" href=\"data:; base64, =\">"
+        "</head>\n"
+        "<body><h1>this is "
+        "what you want</h1><p>"
+        "Hello World"
+        "</p></body></html>\n";
+
+    Response response;
+    response.status() = 200;
+    response.body() = mainPage;
+    response.closeConnection() = false;
+
+    const auto resultStr = response.toString();
+
+    // TODO 
+    server.setMessageCallback([&resultStr](std::shared_ptr<Connection> ptrConn, Buffer& buf) {
+
+        auto& parser = std::any_cast<http::Parser&>(ptrConn->getContext());
+        auto ret = parser.parseRequest(&buf);
+        if(ret) {
+            if (parser.gotAll()) {
+                auto& req = parser.request();
+                ptrConn->send(resultStr);
+            }
+        }else { // parse fail : bad request
+            ptrConn->send(badReq.toString());
+        }
+        //
+        // const auto str = buf.readAll();
+        // LOG_TRACE << "get message from connection:" << ptrConn->fd() << " \n    " << str << ")";
+        // const auto result = ::parse(str);
+        // ptrConn->send(result);
     });
 
     LOG_INFO << "server running";

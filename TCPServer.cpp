@@ -29,7 +29,7 @@ void TcpServer::onAccept(int conn) {
     // fixed, thread unsafe, messageCallback may called before correct set
     connections_[conn] = newConn;
 
-    // newConn->setConnectionCallback()
+    newConn->setConnectionCallback([this](auto conn) { this->connectionCallback_(conn);} );
 
     newConn->setMessageCallback([this](auto conn, auto buffer) { this->messageCallback_(conn, buffer); });
 
@@ -39,9 +39,9 @@ void TcpServer::onAccept(int conn) {
     newConn->setWriteFinishCallback([this](std::shared_ptr<Connection> conn) {
         onWriteFinish(conn);
     });
-    // newConn->established();
+    // newConn->establish();
 
-    loop->runInLoop([newConn]() { newConn->established(); });
+    loop->runInLoop([newConn]() { newConn->establish(); });
 }
 
 void TcpServer::onClose(std::shared_ptr<Connection> conn) {
