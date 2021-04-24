@@ -9,15 +9,12 @@ class EventLoop;
 
 class Acceptor {
 public:
-
-    using AcceptCallback = std::function<void(int)>;
-
-    Acceptor(EventLoop& loop, uint16_t port, const AcceptCallback& callback = [](int fd) { shutdown(fd, 2); });
+    Acceptor(EventLoop& loop, uint16_t port);
     ~Acceptor();
 
     void listen(int backlog) const;
 
-    void acceptCallback(const AcceptCallback&);
+    void acceptCallback(const std::function<void(int)>&);
 
     void onAccept() const;
     
@@ -36,6 +33,8 @@ private:
     std::function<void(int)> acceptCallback_;
 
     InetAddress address_;
+
+    
 
     mutable bool isListening_;
 };

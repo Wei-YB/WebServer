@@ -9,14 +9,10 @@ cmake_minimum_required (VERSION 3.8)
 project ("WebServerTest")
 
 aux_source_directory("./base" baseCodeFile )
-aux_source_directory("./http" httpCodeFile)
-
 
 add_library(base STATIC ${PROJECT_SOURCE_DIR}/${baseCodeFile} )
-add_library(http STATIC ${PROJECT_SOURCE_DIR}/${httpCodeFile} )
 
 target_include_directories(base PUBLIC ${PROJECT_SOURCE_DIR}/base)
-target_include_directories(http PUBLIC ${PROJECT_SOURCE_DIR}/http)
 
 link_libraries(pthread)
 
@@ -36,15 +32,11 @@ set(Thread  ${EventLoop} "EventLoopThread.h" "EventLoopThread.cpp" "EventLoopThr
 
 set(Buffer "Buffer.cpp" "Buffer.h")
 
-set(Server "TCPServer.cpp" "TCPServer.h")
+link_libraries(base)
 
-link_libraries(base http)
-
-add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Connection} ${Acceptor} ${Thread} ${Buffer} ${Server})
+add_executable (main "WebServerTest.cpp" "WebServerTest.h" "HTTPParse.h" "HTTPParse.cpp" ${Poller} ${Connection} ${Acceptor} ${Thread} ${Buffer})
 
 add_executable(myTest "test/test.cpp" "InetAddress.h" "InetAddress.cpp")
 
 add_executable(bufferTest "test/bufferTest.cpp" "Buffer.h" "Buffer.cpp")
-
-add_executable(TimerTest "test/TimerTest.cpp")
 # TODO: 如有需要，请添加测试并安装目标。
