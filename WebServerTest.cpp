@@ -100,3 +100,9 @@ int main() {
     server.start();
     
 }
+
+// TODO: add direct io to buffer
+// TODO: finish httpServer
+// TODO: update the control method of epoll out
+// TODO: add timer for keep alive
+// TODO: maybe make Socket.h a class?

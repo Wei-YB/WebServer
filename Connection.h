@@ -21,7 +21,6 @@ enum class ConnectionState {
 };
 
 
-// TODO: add a context field to the connection
 class Connection final : public std::enable_shared_from_this<Connection> {
 
     using ConnectionPtr = std::shared_ptr<Connection>;

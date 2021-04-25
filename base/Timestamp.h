@@ -10,9 +10,9 @@ constexpr int MicroSecondsPerSecond = 1000 * 1000;
 
 class Timestamp {
 public:
-    Timestamp() : microSecond(0) {}
-    explicit Timestamp(int64_t microSecondFromEpoch) : microSecond(microSecondFromEpoch) {}
-    Timestamp(const Timestamp& timestamp) : microSecond(timestamp.microSecond) {}
+    Timestamp() : microSecond_(0) {}
+    explicit Timestamp(int64_t microSecondFromEpoch) : microSecond_(microSecondFromEpoch) {}
+    Timestamp(const Timestamp& timestamp) : microSecond_(timestamp.microSecond_) {}
 
     std::string toString() const;
 
@@ -31,11 +31,11 @@ public:
     }
 
     static Timestamp fromUnixTime(time_t t, int microseconds) {
-        return Timestamp(t * MicroSecondsPerSecond * t + microseconds);
+        return Timestamp(t * MicroSecondsPerSecond + microseconds);
     }
 
 private:
-    int64_t microSecond;
+    int64_t microSecond_;
 };
 
 inline bool operator<(const Timestamp& lhs, const Timestamp& rhs) {
@@ -48,6 +48,10 @@ inline bool operator>(const Timestamp& lhs, const Timestamp& rhs) {
 
 inline bool operator==(const Timestamp& lhs, const Timestamp& rhs) {
     return lhs.microSecondsFromEpoch() == rhs.microSecondsFromEpoch();
+}
+
+inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs) {
+    return !(lhs.microSecondsFromEpoch() == rhs.microSecondsFromEpoch());
 }
 
 inline double timeDifference(Timestamp high, Timestamp low) {

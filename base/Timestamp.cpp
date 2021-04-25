@@ -7,8 +7,8 @@ USE_NAMESPACE
 
 std::string Timestamp::toString() const {
     char buf[32] = {0};
-    const int64_t seconds = microSecond / MicroSecondsPerSecond;
-    const int64_t microseconds = microSecond % MicroSecondsPerSecond;
+    const int64_t seconds = microSecond_ / MicroSecondsPerSecond;
+    const int64_t microseconds = microSecond_ % MicroSecondsPerSecond;
 
 #if __WORDSIZE == 64
     snprintf(buf, 32, "%ld. %06ld", seconds, microseconds);
@@ -21,13 +21,13 @@ std::string Timestamp::toString() const {
 
 std::string Timestamp::toFormattedString(bool showMicroseconds) const {
     char buf[64] = {0};
-    auto seconds = static_cast<time_t>(microSecond / MicroSecondsPerSecond);
+    auto seconds = static_cast<time_t>(microSecond_ / MicroSecondsPerSecond);
     seconds += 8 * 3600;
     tm tmTime{};
     gmtime_r(&seconds, &tmTime);
 
     if (showMicroseconds) {
-        const auto microseconds = static_cast<int>(microSecond % MicroSecondsPerSecond);
+        const auto microseconds = static_cast<int>(microSecond_ % MicroSecondsPerSecond);
         snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d.%06d",
                  tmTime.tm_year + 1900, tmTime.tm_mon + 1, tmTime.tm_mday,
                  tmTime.tm_hour, tmTime.tm_min, tmTime.tm_sec,
@@ -42,16 +42,16 @@ std::string Timestamp::toFormattedString(bool showMicroseconds) const {
 }
 
 bool Timestamp::valid() const {
-    return microSecond > 0;
+    return microSecond_ > 0;
 }
 
 
 int64_t Timestamp::microSecondsFromEpoch() const {
-    return microSecond;
+    return microSecond_;
 }
 
 time_t Timestamp::secondFromEpoch() const {
-    return microSecond / MicroSecondsPerSecond;
+    return microSecond_ / MicroSecondsPerSecond;
 }
 
 Timestamp Timestamp::now() {
