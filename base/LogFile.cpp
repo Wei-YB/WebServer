@@ -77,7 +77,7 @@ bool LogFile::roll() {
 
 std::string LogFile::getLogFileName(const std::string& basename) {
     auto now = Timestamp::now();
-    return basename + now.toFormattedString(false) + ".log";
+    return basename + now.format(false) + ".log";
 }
 
 

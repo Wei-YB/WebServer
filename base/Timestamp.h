@@ -10,18 +10,30 @@ constexpr int MicroSecondsPerSecond = 1000 * 1000;
 
 class Timestamp {
 public:
+
     Timestamp() : microSecond_(0) {}
     explicit Timestamp(int64_t microSecondFromEpoch) : microSecond_(microSecondFromEpoch) {}
-    Timestamp(const Timestamp& timestamp) : microSecond_(timestamp.microSecond_) {}
 
-    std::string toString() const;
+    Timestamp(const Timestamp& timestamp)  = default;
+    Timestamp(Timestamp&&)                 = default;
+    Timestamp& operator=(const Timestamp&) = default;
+    Timestamp& operator=(Timestamp&&)      = default;
+    ~Timestamp()                           = default;
 
-    std::string toFormattedString(bool showMicroseconds = true) const;
+public:
+    // std::string toString() const;
 
-    bool valid() const;
+    void format(char* buf, size_t len, bool showMicroseconds) const;
 
-    int64_t microSecondsFromEpoch() const;
-    time_t secondFromEpoch() const;
+    [[nodiscard]] std::string format(bool showMicroseconds = true) const;
+
+    [[nodiscard]] bool valid() const;
+
+    [[nodiscard]] int64_t microSecondsFromEpoch() const;
+
+    // replace this func with an implicit type cast
+    // time_t secondFromEpoch() const;
+    explicit operator time_t() const;
 
     static Timestamp now();
     static Timestamp invalid();
@@ -35,39 +47,27 @@ public:
     }
 
 private:
+    static thread_local char buffer_[64];
+
     int64_t microSecond_;
+public:
+    friend double     operator-(const Timestamp&, const Timestamp&);
+    friend Timestamp  operator+(const Timestamp&, double seconds);
+    friend Timestamp& operator+=(Timestamp&, double seconds);
 };
 
-inline bool operator<(const Timestamp& lhs, const Timestamp& rhs) {
-    return lhs.microSecondsFromEpoch() < rhs.microSecondsFromEpoch();
-}
+double operator-(const Timestamp&, const Timestamp&);
 
-inline bool operator>(const Timestamp& lhs, const Timestamp& rhs) {
-    return rhs < lhs;
-}
+Timestamp operator+(const Timestamp&, double seconds);
 
-inline bool operator==(const Timestamp& lhs, const Timestamp& rhs) {
-    return lhs.microSecondsFromEpoch() == rhs.microSecondsFromEpoch();
-}
+Timestamp& operator+=(Timestamp&, double seconds);
 
-inline bool operator!=(const Timestamp& lhs, const Timestamp& rhs) {
-    return !(lhs.microSecondsFromEpoch() == rhs.microSecondsFromEpoch());
-}
+bool operator<(const Timestamp& lhs, const Timestamp& rhs);
 
-inline double timeDifference(Timestamp high, Timestamp low) {
-    int64_t diff = high.microSecondsFromEpoch() - low.microSecondsFromEpoch();
-    return static_cast<double>(diff) / MicroSecondsPerSecond;
-}
+bool operator>(const Timestamp& lhs, const Timestamp& rhs);
 
-///
-/// Add @c seconds to given timestamp.
-///
-/// @return timestamp+seconds as Timestamp
-///
-inline Timestamp addTime(Timestamp timestamp, double seconds) {
-    int64_t delta = static_cast<int64_t>(seconds * MicroSecondsPerSecond);
-    return Timestamp(timestamp.microSecondsFromEpoch() + delta);
-}
+bool operator==(const Timestamp& lhs, const Timestamp& rhs);
 
+bool operator!=(const Timestamp& lhs, const Timestamp& rhs);
 
 END_NAMESPACE

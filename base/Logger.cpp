@@ -96,7 +96,7 @@ void Logger::MyLogger::formatTime() {
 
     if (seconds != t_lastSecond) {
         // need to update the curTime
-        const auto time = time_.toFormattedString(false);
+        const auto time = time_.format(false);
         memcpy(currentTime, time.c_str(), 17);
     }
 
