@@ -1,56 +1,35 @@
-
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <cstdio>
 
-// #include "Thread.h"
 #include "ThisThread.h"
 
 USE_NAMESPACE
 
-__thread int ThisThread::t_cachedTid = 0;
-__thread char ThisThread::t_tidString[32];
-__thread size_t ThisThread::t_tidStringSize;
-__thread const char* ThisThread::t_threadName;
+thread_local int    ThisThread::t_cachedTid = 0;
+thread_local char   ThisThread::t_tidString[32];
+thread_local size_t ThisThread::t_tidStringSize;
 
-void ThisThread::cacheTid(){
-	t_cachedTid = ::syscall(SYS_gettid);
-	t_tidStringSize = sprintf(t_tidString, "%5d", t_cachedTid);
+static void cacheTid() {
+    ThisThread::t_cachedTid     = ::syscall(SYS_gettid);
+    ThisThread::t_tidStringSize = sprintf(ThisThread::t_tidString, "%5d", ThisThread::t_cachedTid);
 }
 
-int ThisThread::tid()
-{
-	if (t_cachedTid == 0)
-		cacheTid();
-	return t_cachedTid;
+int ThisThread::tid() {
+    if (unlikely(t_cachedTid == 0))
+        cacheTid();
+    return t_cachedTid;
 }
 
-const char* ThisThread::tidString()
-{
-	if (t_cachedTid == 0)
-		cacheTid();
-	return t_tidString;
+const char* ThisThread::tidString() {
+    return t_tidString;
 }
 
-size_t ThisThread::tidStringLength()
-{
-	if (t_tidStringSize == 0) {
-		cacheTid();
-	}
-	return t_tidStringSize;
+size_t ThisThread::tidStringLength() {
+    return t_tidStringSize;
 }
 
-const char* ThisThread::name()
-{
-	if (t_threadName == nullptr) {
-		cacheTid();
-	}
-	return t_threadName;
+bool ThisThread::isMainThread() {
+    return getpid() == tid();
 }
-
-bool ThisThread::isMainThread()
-{
-	return getpid() == tid();
-}
-
-

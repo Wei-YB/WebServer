@@ -42,5 +42,7 @@ target_link_libraries(main base http pthread)
 
 
 add_executable(TimestampTest "./base/test/TimestampTest.cpp")
+add_executable(ThisThreadTest "./base/test/ThisThreadTest.cpp")
 target_link_libraries(TimestampTest base gtest gtest_main pthread)
+target_link_libraries(ThisThreadTest base gtest gtest_main pthread)
 # TODO: 如有需要，请添加测试并安装目标。
