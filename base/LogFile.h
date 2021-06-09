@@ -9,7 +9,7 @@ START_NAMESPACE
 
 class LogFile {
     
-private:
+public:
     class MyFile {
     public:
         MyFile(const std::string& name);

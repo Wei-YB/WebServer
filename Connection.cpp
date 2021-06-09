@@ -1,8 +1,8 @@
 #include "Connection.h"
-#include "Logger.h"
+#include "base/Logger.h"
 #include <unistd.h>
 
-#include "Socket.h"
+#include "socket.h"
 #include "EventLoop.h"
 
 USE_NAMESPACE
@@ -74,7 +74,7 @@ void Connection::forceClose() {
 }
 
 void Connection::setTcpNoDelay(bool on) const {
-    setNoDelay(fd(), on);
+    socket::setNoDelay(fd(), on);
 }
 
 void Connection::enableRead() {
@@ -204,7 +204,7 @@ void Connection::handleError() {
 void Connection::shutdownInLoop() {
     loop_.assertInLoopThread();
     if (!channel_.isWriting()) {
-        ShutdownWrite(this->fd());
+        socket::ShutdownWrite(this->fd());
     }
 }
 

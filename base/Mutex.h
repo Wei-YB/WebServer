@@ -25,6 +25,8 @@ public:
 
     void unlock();
 
+    bool tryLock();
+
     pthread_mutex_t* getPthreadMutex();
 
 private:
@@ -37,6 +39,11 @@ private:
 class LockGuard {
 public:
     explicit LockGuard(Mutex& lock);
+    LockGuard(const LockGuard&) = delete;
+    LockGuard(LockGuard&&) = delete;
+    LockGuard& operator=(const LockGuard&) = delete;
+    LockGuard& operator=(LockGuard&&) = delete;
+
 
     ~LockGuard();
 

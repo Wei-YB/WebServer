@@ -4,9 +4,11 @@
 #include <atomic>
 #include <functional>
 
+#include "base/Mutex.h"
+#include "base/Timestamp.h"
+
 #include "Channel.h"
-#include "Mutex.h"
-#include "Timestamp.h"
+
 
 START_NAMESPACE
 

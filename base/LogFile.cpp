@@ -7,7 +7,7 @@
 
 USE_NAMESPACE
 
-LogFile::MyFile::MyFile(const std::string& name) : file_ (fopen(name.c_str(), "ae")),bytesWrite_(0) {}
+LogFile::MyFile::MyFile(const std::string& name) : file_ (fopen(name.c_str(), "a")), bytesWrite_(0) {}
 
 LogFile::MyFile::~MyFile() {   fclose(file_);}
 
@@ -79,5 +79,3 @@ std::string LogFile::getLogFileName(const std::string& basename) {
     auto now = Timestamp::now();
     return basename + now.format(false) + ".log";
 }
-
-

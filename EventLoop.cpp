@@ -2,11 +2,13 @@
 
 #include <unistd.h>
 
+#include "base/Mutex.h"
+#include "base/ThisThread.h"
 
 #include "Channel.h"
 #include "Poller.h"
-#include "ThisThread.h"
 #include "Socket.h"
+
 
 USE_NAMESPACE
 
@@ -17,7 +19,7 @@ constexpr int PollTimeMs = 10000;
 EventLoop::EventLoop() : running_(false),
                          eventHandling_(false),
                          queueRunning_(false),
-                         wakeupFd_(eventFd()),
+                         wakeupFd_(socket::eventFd()),
                          wakeupChannel_(*this, wakeupFd_),
                          stop_(false),
                          threadId_(ThisThread::tid()),
@@ -30,7 +32,7 @@ EventLoop::EventLoop() : running_(false),
 
 EventLoop::~EventLoop() {
     wakeupChannel_.disableAll();
-    Close(wakeupFd_);
+    socket::Close(wakeupFd_);
 }
 
 

@@ -2,14 +2,14 @@
 
 #include "Channel.h"
 #include "InetAddress.h"
-
+#include "Socket.h"
 START_NAMESPACE
 
 class EventLoop;
 
 class Acceptor {
 public:
-
+    // TODO: update AcceptCallback to use TCPSocket
     using AcceptCallback = std::function<void(int)>;
 
     Acceptor(EventLoop& loop, uint16_t port, const AcceptCallback& callback = [](int fd) { shutdown(fd, 2); });
@@ -24,11 +24,9 @@ public:
     const Channel& channel() const { return listenChannel_; }
     Channel& channel() { return listenChannel_; }
 
-    mutable InetAddress peerAddress;
-    InetAddress hostAddress;
-
 private:
-    int fd_;
+
+    TCPSocket socket_;
     Channel listenChannel_;
 
     EventLoop& loop_;

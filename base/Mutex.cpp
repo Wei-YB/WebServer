@@ -7,12 +7,12 @@
 
 USE_NAMESPACE
 
-Mutex::Mutex() : mutex_(), holder_(0) {
+Mutex::Mutex() : mutex_(), holder_(-1) {
     pthread_mutex_init(&mutex_, nullptr);
 }
 
 Mutex::~Mutex() {
-   // assert(holder_ == 0);
+    assert(holder_ == -1);
     pthread_mutex_destroy(&mutex_);
 }
 
@@ -26,12 +26,17 @@ void Mutex::assertLocked() const {
 
 void Mutex::lock() {
     pthread_mutex_lock(&mutex_);
-  //  holder_ = ThisThread::tid();
+    holder_ = ThisThread::tid();
 }
 
 void Mutex::unlock() {
     pthread_mutex_unlock(&mutex_);
-  //  holder_ = 0;
+    holder_ = -1;
+}
+
+bool Mutex::tryLock()
+{
+    return pthread_mutex_trylock(&mutex_) == 0;
 }
 
 pthread_mutex_t* Mutex::getPthreadMutex() {

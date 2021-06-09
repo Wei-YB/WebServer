@@ -1,40 +1,33 @@
-#include "Acceptor.h"
-#include "base/Logger.h"
-#include "Socket.h"
-#include "EventLoop.h"
-
-
 #include <unistd.h>
 #include <strings.h>
 #include <cerrno>
+
+#include "Acceptor.h"
+#include "base/Logger.h"
+#include "EventLoop.h"
+
 USE_NAMESPACE
 
 Acceptor::Acceptor(EventLoop&            loop,
                    uint16_t              port,
-                   const AcceptCallback& callback) : peerAddress("0.0.0.0", 0),
-                                                     hostAddress("127.0.0.1", port),
-                                                     fd_(NonblockInetSocket()),
-                                                     listenChannel_(loop, fd_),
+                   const AcceptCallback& callback) : socket_(TCPSocket(true)),
+                                                     listenChannel_(loop, socket_.fd()),
                                                      loop_(loop),
                                                      acceptCallback_(callback),
                                                      address_(InetAddress::listenAddress(port)),
                                                      isListening_(false) {
-    if (fd_ < 0) {
-        LOG_SYSFATAL << "socket create error ";
-    }
-
-    Bind(fd_, address_);
+    socket_.bind(address_);
 
     listenChannel_.enableReading();
     listenChannel_.setReadCallback([this]() { this->onAccept(); });
 
-    LOG_TRACE << "Acceptor created, fd = " << fd_;
+    LOG_TRACE << "Acceptor created, fd = " << socket_.fd();
 }
 
 Acceptor::~Acceptor() {
     listenChannel_.disableAll();
     listenChannel_.remove();
-    ::close(fd_);
+    socket_.close();
 }
 
 
@@ -43,7 +36,7 @@ void Acceptor::listen(int backlog) const {
         LOG_FATAL << "socket already in listening";
     }
     isListening_ = true;
-    Listen(fd_, backlog);
+    socket_.listen(backlog);
 }
 
 void Acceptor::acceptCallback(const std::function<void(int)>& func) {
@@ -53,11 +46,12 @@ void Acceptor::acceptCallback(const std::function<void(int)>& func) {
 void Acceptor::onAccept() const {
     while (true) {
         // InetAddress peerAddr{};
-        const auto  conn = Accept(fd_, peerAddress);
-        if (conn > 0) {
-            LOG_INFO << "new connection from " << peerAddress.toString() << " fd = " << conn;
-            // this->peerAddress = peerAddress;
-            acceptCallback_(conn);
+        auto conn = socket_.accept();
+        if (conn.isValid()) {
+            LOG_INFO << "new connection from " << conn.peerAddress().toString()
+            << "to " << conn.hostAddress().toString() << " and fd = " << conn.fd();
+            conn.setNonBlock();
+            acceptCallback_(conn.fd());
         }
         else {
             break;

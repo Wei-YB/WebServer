@@ -6,7 +6,7 @@ using webServer::Timestamp;
 
 int main() {
     testing::InitGoogleTest();
-    auto ret =  RUN_ALL_TESTS();
+    auto ret = RUN_ALL_TESTS();
     getchar();
 }
 

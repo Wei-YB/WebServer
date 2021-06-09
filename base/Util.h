@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #define PROJECT_NAME webServer
 
 #define START_NAMESPACE namespace PROJECT_NAME{
